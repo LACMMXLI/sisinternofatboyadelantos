@@ -12,7 +12,7 @@ import * as argon2 from 'argon2';
 const prisma = new PrismaClient();
 
 const DEMO_USERS: Array<{ username: string; displayName: string; role: Role; branches: string[] }> = [
-  { username: 'owner', displayName: 'Alonso (Propietario)', role: 'OWNER_ADMIN', branches: [] },
+  { username: 'owner', displayName: 'Alonso', role: 'OWNER_ADMIN', branches: [] },
   {
     username: 'nomina',
     displayName: 'Encargada de Nómina',

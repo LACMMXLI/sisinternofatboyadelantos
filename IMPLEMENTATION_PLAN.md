@@ -152,6 +152,13 @@ Cada fase se cierra solo si pasa lint + typecheck + tests + build, y deja el sis
 - [ ] `EmployeeSearch`, `EmployeeList`, `EmployeeIdentityCard` reales conectados a API.
 - **Verificación:** búsqueda tolerante, filtro por sucursal/estado, un cajero solo ve empleados de su(s) sucursal(es).
 
+### Prototipo visual de la Libreta (adelantado a pedido del usuario, 2026-08-08) ✅
+- [x] A petición explícita del usuario, se adelantó la construcción visual completa de la pantalla insignia (normalmente Fase 4) usando datos de ejemplo (`apps/web/src/features/libreta/mockData.ts`) para validar el parecido con `docs/references/` antes de seguir con más backend.
+- [x] Componentes nuevos y fieles a la referencia: `EmployeeList`/`EmployeeListItem`, `EmployeeIdentityCard`, `NotebookShell` + `NotebookRings` + `MovementRow` (libreta con espiral, borde azul, líneas, título/total manuscritos), `BalanceCard` + `CategoryBreakdown`, `QuickMovementGrid` + `QuickMovementTile`, `DonutChart` (SVG propio), `RecentActivityCard`, `WeeklySummaryCard`, `QuickActionsCard`.
+- [x] Verificado con captura Playwright autenticada en 3 tamaños (`apps/web/scripts/capture-libreta-authenticated.mjs`) — sin overflow horizontal, match visual alto con `docs/references/ref-01-dashboard-claro-libreta-nominas.png`.
+- **Bugs reales encontrados y corregidos en esta pasada:** (1) signo de `balanceCents` invertido en los datos de ejemplo respecto a la regla del §6.1 (positivo = deuda pendiente, no negativo); (2) `initialsFrom` rompía con nombres que llevan paréntesis (p. ej. "Alonso (Propietario)" producía "A(" en vez de "AP") — se corrigió para extraer solo letras Unicode y se deduplicó la función (antes vivía copiada en `AppHeader.tsx`) hacia `lib/utils/avatar.ts`.
+- **Pendiente para la Fase 3/4 real:** estos componentes hoy reciben datos de `mockData.ts`; se conectan a `EmployeesModule`/`LedgerModule` cuando existan, sin necesidad de rediseño — solo cambia la fuente de datos.
+
 ### Fase 4 — Ledger principal (pantalla insignia)
 - [ ] `LedgerModule` completo: crear/listar/resumir/aprobar/rechazar/revertir/reemplazar, idempotencia, auditoría, umbral de aprobación.
 - [ ] Pantalla principal ("libreta") con calidad visual alta desde esta fase: `NotebookShell`, `MovementRow`, `BalanceCard`, `CategoryBreakdown`, `QuickMovementGrid`, `NewMovementSheet`, `MoneyInput`.

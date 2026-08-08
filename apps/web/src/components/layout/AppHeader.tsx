@@ -3,15 +3,11 @@ import { Bell, LogOut, Menu, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROLE_LABELS } from '@libreta/shared';
 import { useAuth } from '@/app/providers/AuthProvider';
+import { initialsFrom } from '@/lib/utils/avatar';
 
 interface AppHeaderProps {
   onOpenMenu?: () => void;
   searchPlaceholder?: string;
-}
-
-function initialsFrom(name: string): string {
-  const parts = name.trim().split(/\s+/).slice(0, 2);
-  return parts.map((p) => p[0]?.toUpperCase() ?? '').join('') || '?';
 }
 
 /**
