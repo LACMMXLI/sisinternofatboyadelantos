@@ -1,0 +1,39 @@
+/**
+ * Tokens visuales de "Libreta de Nóminas".
+ * Fuente: PROMPT_MAESTRO_LIBRETA_NOMINAS_CLAUDE_CODE.md §4.3
+ * No hardcodear estos valores en componentes: siempre referenciar la variable
+ * o la utilidad de Tailwind generada a partir de @theme en index.css.
+ */
+:root {
+  --canvas: #f3f7fd;
+  --surface: #ffffff;
+  --surface-soft: #f8faff;
+  --ink: #10203f;
+  --muted: #66738c;
+  --line: #dce5f3;
+
+  --brand-800: #07348f;
+  --brand-700: #0a46b6;
+  --brand-600: #0f67e8;
+  --brand-500: #1787ff;
+
+  --success: #0dbd5b;
+  --success-soft: #ddf8e8;
+  --danger: #ef334a;
+  --danger-soft: #ffe1e6;
+  --warning: #ff8a1f;
+  --warning-soft: #fff0d9;
+  --purple: #8a3ffc;
+  --purple-soft: #efe3ff;
+  --pink: #f43f8f;
+  --pink-soft: #ffe0ef;
+
+  /* Radios */
+  --radius-control: 14px;
+  --radius-card: 22px;
+  --radius-pill: 999px;
+
+  /* Sombras */
+  --shadow-control: 0 1px 2px rgba(16, 32, 63, 0.06), 0 1px 1px rgba(16, 32, 63, 0.04);
+  --shadow-panel: 0 12px 32px rgba(16, 32, 63, 0.1), 0 2px 8px rgba(16, 32, 63, 0.06);
+}

@@ -1,0 +1,539 @@
+// Esquema de datos de "Libreta de Nóminas".
+// Fuente: PROMPT_MAESTRO_LIBRETA_NOMINAS_CLAUDE_CODE.md §10.
+// Generador clásico (prisma-client-js): integración estándar con NestJS,
+// sin rutas de import personalizadas ni adaptadores de driver adicionales.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identidad y estructura del negocio
+// ---------------------------------------------------------------------------
+
+model Organization {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  logoObjectKey String?
+  currency      String   @default("MXN")
+  timezone      String   @default("America/Tijuana")
+  primaryColor  String   @default("#0F67E8")
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  branches           Branch[]
+  users              User[]
+  employees          Employee[]
+  movementCategories MovementCategory[]
+  ledgerMovements    LedgerMovement[]
+  payrollPeriods     PayrollPeriod[]
+  payrollBatches     PayrollBatch[]
+  notifications      Notification[]
+  auditLogs          AuditLog[]
+  settings           OrganizationSettings?
+
+  @@map("organizations")
+}
+
+model Branch {
+  id             String   @id @default(uuid())
+  organizationId String
+  code           String
+  name           String
+  address        String?
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  userAccess       UserBranch[]
+  employeesPrimary Employee[]       @relation("EmployeePrimaryBranch")
+  employeeBranches EmployeeBranch[]
+  ledgerMovements  LedgerMovement[]
+  payrollBatches   PayrollBatch[]
+  auditLogs        AuditLog[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("branches")
+}
+
+// ---------------------------------------------------------------------------
+// Usuarios, sesiones y RBAC
+// ---------------------------------------------------------------------------
+
+enum Role {
+  OWNER_ADMIN
+  PAYROLL_MANAGER
+  GENERAL_MANAGER
+  BRANCH_MANAGER
+  CASHIER_RECORDER
+  EMPLOYEE_SELF_SERVICE
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  organizationId     String
+  username           String
+  email              String?
+  displayName        String
+  passwordHash       String
+  pinHash            String?
+  role               Role
+  active             Boolean   @default(true)
+  mustChangePassword Boolean   @default(true)
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  branchAccess      UserBranch[]
+  employeeProfile   Employee?
+  refreshSessions   RefreshSession[]
+  createdMovements  LedgerMovement[] @relation("MovementCreatedBy")
+  approvedMovements LedgerMovement[] @relation("MovementApprovedBy")
+  notifications     Notification[]
+  auditLogs         AuditLog[]
+
+  @@unique([organizationId, username])
+  @@index([organizationId])
+  @@map("users")
+}
+
+model UserBranch {
+  userId   String
+  branchId String
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([userId, branchId])
+  @@map("user_branches")
+}
+
+model RefreshSession {
+  id           String    @id @default(uuid())
+  userId       String
+  tokenHash    String    @unique
+  deviceLabel  String?
+  ipSummary    String?
+  expiresAt    DateTime
+  revokedAt    DateTime?
+  replacedById String?
+  createdAt    DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_sessions")
+}
+
+// ---------------------------------------------------------------------------
+// Empleados
+// ---------------------------------------------------------------------------
+
+model Employee {
+  id              String    @id @default(uuid())
+  organizationId  String
+  employeeNumber  String
+  firstName       String
+  lastName        String
+  displayName     String
+  jobTitle        String?
+  photoObjectKey  String?
+  hireDate        DateTime?
+  active          Boolean   @default(true)
+  primaryBranchId String
+  userId          String?   @unique
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  organization  Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  primaryBranch Branch       @relation("EmployeePrimaryBranch", fields: [primaryBranchId], references: [id])
+  user          User?        @relation(fields: [userId], references: [id])
+
+  additionalBranches EmployeeBranch[]
+  ledgerMovements    LedgerMovement[]
+  acknowledgements   MovementAcknowledgement[]
+  disputes           MovementDispute[]
+  payrollBatchItems  PayrollBatchItem[]
+
+  @@unique([organizationId, employeeNumber])
+  @@index([organizationId])
+  @@index([organizationId, primaryBranchId])
+  @@map("employees")
+}
+
+model EmployeeBranch {
+  employeeId String
+  branchId   String
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  branch   Branch   @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@id([employeeId, branchId])
+  @@map("employee_branches")
+}
+
+// ---------------------------------------------------------------------------
+// Categorías de movimiento
+// ---------------------------------------------------------------------------
+
+enum MovementDirection {
+  CHARGE
+  CREDIT
+}
+
+model MovementCategory {
+  id                     String            @id @default(uuid())
+  organizationId         String
+  code                   String
+  label                  String
+  direction              MovementDirection
+  iconName               String
+  colorToken             String
+  sortOrder              Int               @default(0)
+  requiresNote           Boolean           @default(false)
+  requiresEvidence       Boolean           @default(false)
+  requiresApproval       Boolean           @default(false)
+  approvalThresholdCents Int?
+  dailyLimitCents        Int?
+  weeklyLimitCents       Int?
+  maxPerMovementCents    Int?
+  system                 Boolean           @default(false)
+  active                 Boolean           @default(true)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ledgerMovements LedgerMovement[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId])
+  @@map("movement_categories")
+}
+
+// ---------------------------------------------------------------------------
+// Ledger — núcleo contable
+// ---------------------------------------------------------------------------
+
+enum MovementStatus {
+  PENDING_APPROVAL
+  POSTED
+  REVERSED
+  REJECTED
+}
+
+enum MovementSource {
+  WEB
+  PWA_OFFLINE
+  PAYROLL
+  IMPORT
+  SYSTEM
+}
+
+model LedgerMovement {
+  id                 String            @id @default(uuid())
+  organizationId     String
+  branchId           String
+  employeeId         String
+  categoryId         String
+  direction          MovementDirection
+  amountCents        Int
+  concept            String
+  occurredAt         DateTime
+  timezone           String            @default("America/Tijuana")
+  status             MovementStatus    @default(POSTED)
+  createdByUserId    String
+  approvedByUserId   String?
+  approvedAt         DateTime?
+  rejectedAt         DateTime?
+  rejectionReason    String?
+  idempotencyKey     String
+  source             MovementSource    @default(WEB)
+  originalMovementId String?
+  reversalReason     String?
+  metadata           Json?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  organization Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  branch       Branch           @relation(fields: [branchId], references: [id])
+  employee     Employee         @relation(fields: [employeeId], references: [id])
+  category     MovementCategory @relation(fields: [categoryId], references: [id])
+  createdBy    User             @relation("MovementCreatedBy", fields: [createdByUserId], references: [id])
+  approvedBy   User?            @relation("MovementApprovedBy", fields: [approvedByUserId], references: [id])
+
+  originalMovement LedgerMovement?  @relation("MovementReversalChain", fields: [originalMovementId], references: [id])
+  reversals        LedgerMovement[] @relation("MovementReversalChain")
+
+  attachments       MovementAttachment[]
+  acknowledgement   MovementAcknowledgement?
+  disputes          MovementDispute[]
+  sourceAllocations SettlementAllocation[]   @relation("AllocationSourceMovement")
+  creditAllocations SettlementAllocation[]   @relation("AllocationCreditMovement")
+  payrollBatchItems PayrollBatchItem[]
+
+  @@unique([organizationId, idempotencyKey])
+  @@index([organizationId, employeeId, occurredAt])
+  @@index([organizationId, branchId, occurredAt])
+  @@index([organizationId, status])
+  @@index([organizationId, categoryId])
+  @@map("ledger_movements")
+}
+
+model MovementAttachment {
+  id               String   @id @default(uuid())
+  movementId       String
+  objectKey        String
+  fileName         String
+  mimeType         String
+  sizeBytes        Int
+  checksum         String
+  uploadedByUserId String
+  createdAt        DateTime @default(now())
+
+  movement LedgerMovement @relation(fields: [movementId], references: [id], onDelete: Cascade)
+
+  @@index([movementId])
+  @@map("movement_attachments")
+}
+
+enum AcknowledgementStatus {
+  PENDING
+  ACKNOWLEDGED
+}
+
+model MovementAcknowledgement {
+  id             String                @id @default(uuid())
+  movementId     String                @unique
+  employeeId     String
+  status         AcknowledgementStatus @default(PENDING)
+  comment        String?
+  acknowledgedAt DateTime?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  movement LedgerMovement @relation(fields: [movementId], references: [id], onDelete: Cascade)
+  employee Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("movement_acknowledgements")
+}
+
+enum DisputeStatus {
+  OPEN
+  RESPONDED
+  RESOLVED
+}
+
+model MovementDispute {
+  id                String        @id @default(uuid())
+  movementId        String
+  employeeId        String
+  status            DisputeStatus @default(OPEN)
+  comment           String
+  response          String?
+  respondedByUserId String?
+  respondedAt       DateTime?
+  resolvedAt        DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  movement LedgerMovement @relation(fields: [movementId], references: [id], onDelete: Cascade)
+  employee Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([movementId])
+  @@index([employeeId])
+  @@map("movement_disputes")
+}
+
+// ---------------------------------------------------------------------------
+// Nómina
+// ---------------------------------------------------------------------------
+
+enum PayrollPeriodFrequency {
+  WEEKLY
+  BIWEEKLY
+}
+
+enum PayrollPeriodStatus {
+  OPEN
+  CLOSED
+}
+
+model PayrollPeriod {
+  id             String                 @id @default(uuid())
+  organizationId String
+  frequency      PayrollPeriodFrequency
+  startsAt       DateTime
+  endsAt         DateTime
+  payDate        DateTime
+  timezone       String                 @default("America/Tijuana")
+  status         PayrollPeriodStatus    @default(OPEN)
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  batches      PayrollBatch[]
+
+  @@index([organizationId, startsAt, endsAt])
+  @@map("payroll_periods")
+}
+
+enum PayrollBatchStatus {
+  DRAFT
+  UNDER_REVIEW
+  LOCKED
+  APPLIED
+  CLOSED
+  REOPENED
+}
+
+model PayrollBatch {
+  id                String             @id @default(uuid())
+  organizationId    String
+  periodId          String
+  branchId          String?
+  status            PayrollBatchStatus @default(DRAFT)
+  version           Int                @default(1)
+  createdByUserId   String
+  reviewedByUserId  String?
+  lockedAt          DateTime?
+  appliedAt         DateTime?
+  closedAt          DateTime?
+  reopenedAt        DateTime?
+  reopenReason      String?
+  totalPlannedCents Int                @default(0)
+  totalAppliedCents Int                @default(0)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  period       PayrollPeriod @relation(fields: [periodId], references: [id])
+  branch       Branch?       @relation(fields: [branchId], references: [id])
+
+  items       PayrollBatchItem[]
+  allocations SettlementAllocation[]
+
+  @@index([organizationId, periodId])
+  @@index([organizationId, status])
+  @@map("payroll_batches")
+}
+
+model PayrollBatchItem {
+  id                 String   @id @default(uuid())
+  batchId            String
+  employeeId         String
+  ledgerMovementId   String?
+  balanceAtPrepCents Int
+  plannedAmountCents Int
+  appliedAmountCents Int      @default(0)
+  balanceAfterCents  Int?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  batch          PayrollBatch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  employee       Employee        @relation(fields: [employeeId], references: [id])
+  creditMovement LedgerMovement? @relation(fields: [ledgerMovementId], references: [id])
+
+  @@unique([batchId, employeeId])
+  @@index([batchId])
+  @@map("payroll_batch_items")
+}
+
+model SettlementAllocation {
+  id               String   @id @default(uuid())
+  batchId          String
+  sourceMovementId String
+  creditMovementId String
+  allocatedCents   Int
+  createdAt        DateTime @default(now())
+
+  batch          PayrollBatch   @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  sourceMovement LedgerMovement @relation("AllocationSourceMovement", fields: [sourceMovementId], references: [id])
+  creditMovement LedgerMovement @relation("AllocationCreditMovement", fields: [creditMovementId], references: [id])
+
+  @@index([sourceMovementId])
+  @@index([creditMovementId])
+  @@index([batchId])
+  @@map("settlement_allocations")
+}
+
+// ---------------------------------------------------------------------------
+// Notificaciones y auditoría
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id             String   @id @default(uuid())
+  organizationId String
+  userId         String
+  type           String
+  title          String
+  body           String?
+  linkPath       String?
+  read           Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, userId, read])
+  @@map("notifications")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid())
+  organizationId String
+  actorUserId    String?
+  action         String
+  entityType     String
+  entityId       String
+  branchId       String?
+  requestId      String?
+  reason         String?
+  beforeSnapshot Json?
+  afterSnapshot  Json?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  actor        User?        @relation(fields: [actorUserId], references: [id])
+  branch       Branch?      @relation(fields: [branchId], references: [id])
+
+  @@index([organizationId, entityType, entityId])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, actorUserId])
+  @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------------------
+// Ajustes del negocio
+// ---------------------------------------------------------------------------
+
+model OrganizationSettings {
+  id                      String                 @id @default(uuid())
+  organizationId          String                 @unique
+  weekStartsOn            Int                    @default(1) // 0=domingo ... 6=sábado
+  payrollFrequency        PayrollPeriodFrequency @default(WEEKLY)
+  payrollCutoffDay        Int                    @default(5)
+  correctionWindowMinutes Int                    @default(15)
+  approvalThresholdCents  Int                    @default(100000)
+  acknowledgementRequired Boolean                @default(false)
+  offlineEnabled          Boolean                @default(true)
+  fileRetentionDays       Int                    @default(365)
+  maxUploadMb             Int                    @default(10)
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("organization_settings")
+}

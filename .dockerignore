@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+**/dist
+**/build
+**/.turbo
+**/coverage
+**/playwright-report
+**/test-results
+**/.qa
+.git
+.env
+**/.env
+**/.env.*
+!**/.env.example
+*.log
+.DS_Store
+Thumbs.db
