@@ -19,24 +19,24 @@ interface NotebookShellProps {
  */
 export function NotebookShell({ employeeFirstName, periodLabel, movements, totalCents }: NotebookShellProps) {
   return (
-    <section className="relative rounded-card border border-line bg-surface p-6 shadow-control xl:min-h-[70vh]">
+    <section className="relative rounded-card border border-line bg-surface p-4 shadow-control xl:min-h-[70vh]">
       <NotebookRings />
 
       {/* Borde azul lateral (§4.1) */}
-      <div className="absolute top-6 bottom-6 left-0 w-1.5 rounded-full bg-gradient-to-b from-brand-500 to-brand-700 sm:left-1" />
+      <div className="absolute top-4 bottom-4 left-0 w-1.5 rounded-full bg-gradient-to-b from-brand-500 to-brand-700 sm:left-1" />
 
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 pl-3 sm:pl-4">
-        <h2 className="relative font-hand text-2xl leading-none text-ink">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 pl-3 sm:pl-4">
+        <h2 className="relative font-hand text-xl leading-none text-ink">
           Movimientos de {employeeFirstName}
           <span className="absolute -bottom-1 left-0 h-2 w-full -rotate-1 rounded-full bg-warning/40" />
         </h2>
         <button
           type="button"
-          className="flex h-9 items-center gap-1.5 rounded-pill border border-line bg-surface-soft px-3.5 text-xs font-semibold text-ink hover:bg-line/40"
+          className="flex h-8 items-center gap-1.5 rounded-pill border border-line bg-surface-soft px-3 text-xs font-semibold text-ink hover:bg-line/40"
         >
-          <Calendar size={14} className="text-brand-600" />
+          <Calendar size={13} className="text-brand-600" />
           {periodLabel}
-          <ChevronDown size={14} className="text-muted" />
+          <ChevronDown size={13} className="text-muted" />
         </button>
       </div>
 
@@ -44,10 +44,10 @@ export function NotebookShell({ employeeFirstName, periodLabel, movements, total
         className="pl-3 sm:pl-4"
         style={{
           backgroundImage:
-            'repeating-linear-gradient(to bottom, transparent, transparent 47px, var(--line) 48px)',
+            'repeating-linear-gradient(to bottom, transparent, transparent 39px, var(--line) 40px)',
         }}
       >
-        <div className="grid grid-cols-[88px_1fr_100px_90px_84px_28px] gap-2 pb-2 text-xs font-semibold tracking-wide text-muted uppercase">
+        <div className="grid grid-cols-[88px_1fr_100px_90px_84px_28px] gap-2 pb-1.5 text-xs font-semibold tracking-wide text-muted uppercase">
           <span>Fecha</span>
           <span>Concepto</span>
           <span>Tipo</span>
@@ -61,7 +61,7 @@ export function NotebookShell({ employeeFirstName, periodLabel, movements, total
         ))}
       </div>
 
-      <div className="mt-8 flex items-center gap-3 pl-3 font-hand text-xl text-brand-700 sm:pl-4">
+      <div className="mt-5 flex items-center gap-3 pl-3 font-hand text-xl text-brand-700 sm:pl-4">
         Total del periodo
         <svg width="40" height="16" viewBox="0 0 40 16" fill="none" aria-hidden="true">
           <path d="M1 8h34M28 2l7 6-7 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

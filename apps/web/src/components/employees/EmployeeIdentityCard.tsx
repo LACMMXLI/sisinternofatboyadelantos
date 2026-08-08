@@ -31,14 +31,14 @@ export function EmployeeIdentityCard({
   const avatarColor = avatarColorFor(displayName);
 
   return (
-    <div className="mb-4 flex items-center gap-4 px-1">
+    <div className="mb-2.5 flex items-center gap-3 px-1">
       <div className="relative shrink-0">
         {photoUrl ? (
-          <img src={photoUrl} alt="" className="h-14 w-14 rounded-full object-cover" />
+          <img src={photoUrl} alt="" className="h-12 w-12 rounded-full object-cover" />
         ) : (
           <div
             className={cn(
-              'grid h-14 w-14 place-items-center rounded-full text-lg font-bold',
+              'grid h-12 w-12 place-items-center rounded-full text-base font-bold',
               avatarColor.bg,
               avatarColor.text,
             )}
@@ -47,12 +47,12 @@ export function EmployeeIdentityCard({
           </div>
         )}
         {active ? (
-          <span className="absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-canvas bg-success" />
+          <span className="absolute right-0 bottom-0 h-2.5 w-2.5 rounded-full border-2 border-canvas bg-success" />
         ) : null}
       </div>
 
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-xl font-bold text-ink">{displayName}</h1>
+        <h1 className="truncate text-lg font-bold text-ink">{displayName}</h1>
         <div className="mt-0.5 flex flex-wrap items-center gap-2 text-sm">
           <span className="text-muted">{jobTitle}</span>
           {employeeNumber ? (
@@ -62,14 +62,14 @@ export function EmployeeIdentityCard({
           ) : null}
         </div>
 
-        <nav className="mt-3 flex gap-4 border-b border-line">
+        <nav className="mt-2 flex gap-4 border-b border-line">
           {tabs.map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => onTabChange(tab)}
               className={cn(
-                '-mb-px border-b-2 pb-2 text-sm font-semibold transition-colors',
+                '-mb-px border-b-2 pb-1.5 text-sm font-semibold transition-colors',
                 tab === activeTab
                   ? 'border-brand-600 text-brand-600'
                   : 'border-transparent text-muted hover:text-ink',

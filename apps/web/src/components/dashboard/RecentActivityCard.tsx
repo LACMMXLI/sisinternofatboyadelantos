@@ -12,12 +12,12 @@ interface RecentActivityCardProps {
 
 export function RecentActivityCard({ items }: RecentActivityCardProps) {
   return (
-    <div className="rounded-card border border-line bg-surface p-5 shadow-control">
-      <div className="mb-3 flex items-center gap-2">
+    <div className="rounded-card border border-line bg-surface p-4 shadow-control">
+      <div className="mb-2 flex items-center gap-2">
         <Clock size={16} className="text-brand-600" />
         <h3 className="text-sm font-bold text-ink">Actividad Reciente (Hoy)</h3>
       </div>
-      <ul className="space-y-3">
+      <ul className="space-y-2">
         {items.map((item) => {
           const Icon = ICONS[item.iconColor] ?? HandCoins;
           return (

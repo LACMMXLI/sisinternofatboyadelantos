@@ -32,8 +32,8 @@ export function LibretaPage() {
   const firstName = employee.displayName.split(' ')[0];
 
   return (
-    <div className="space-y-5">
-      <div className="grid gap-5 xl:grid-cols-[300px_minmax(560px,1fr)_320px]">
+    <div className="space-y-3.5">
+      <div className="grid gap-3.5 xl:grid-cols-[280px_minmax(560px,1fr)_300px]">
         <EmployeeList
           employees={MOCK_EMPLOYEES}
           selectedId={selectedId}
@@ -41,7 +41,7 @@ export function LibretaPage() {
           onNewMovement={() => {}}
         />
 
-        <div className="rounded-card border border-line bg-surface p-6 shadow-control xl:min-h-[70vh]">
+        <div className="rounded-card border border-line bg-surface p-4 shadow-control xl:min-h-[70vh]">
           <EmployeeIdentityCard
             displayName={employee.displayName}
             jobTitle={employee.jobTitle}
@@ -59,12 +59,12 @@ export function LibretaPage() {
           />
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-2.5">
           <BalanceCard balanceCents={employee.balanceCents} breakdown={MOCK_BREAKDOWN} />
 
           <button
             type="button"
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-control bg-success text-sm font-semibold text-white shadow-control transition hover:brightness-105"
+            className="flex h-11 w-full items-center justify-center gap-2 rounded-control bg-success text-sm font-semibold text-white shadow-control transition hover:brightness-105"
           >
             <Plus size={18} /> Nuevo Movimiento
           </button>
@@ -73,14 +73,14 @@ export function LibretaPage() {
 
           <button
             type="button"
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-control bg-brand-600/8 text-sm font-semibold text-brand-700 hover:bg-brand-600/14"
+            className="flex h-10 w-full items-center justify-center gap-2 rounded-control bg-brand-600/8 text-sm font-semibold text-brand-700 hover:bg-brand-600/14"
           >
             <MessageSquareText size={16} /> Nota / Comentario
           </button>
         </div>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
+      <div className="grid gap-3.5 lg:grid-cols-3">
         <RecentActivityCard items={MOCK_RECENT_ACTIVITY} />
         <WeeklySummaryCard totalCents={MOCK_WEEK_TOTAL_CENTS} breakdown={MOCK_BREAKDOWN} />
         <QuickActionsCard />

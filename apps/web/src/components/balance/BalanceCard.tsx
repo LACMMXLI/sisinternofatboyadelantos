@@ -18,7 +18,7 @@ export function BalanceCard({ balanceCents, breakdown }: BalanceCardProps) {
   const progressPercent = Math.min(100, (Math.abs(balanceCents) / (maxCents * 1.6)) * 100);
 
   return (
-    <div className="rounded-card border border-line bg-surface p-5 shadow-control">
+    <div className="rounded-card border border-line bg-surface p-4 shadow-control">
       <div className="mb-1 flex items-center justify-between">
         <p className="text-sm font-semibold text-ink">Saldo Actual</p>
         <TrendingUp size={16} className="text-brand-600" />
@@ -26,19 +26,19 @@ export function BalanceCard({ balanceCents, breakdown }: BalanceCardProps) {
       <p
         className={
           balance.tone === 'pending'
-            ? 'text-3xl font-extrabold text-danger'
+            ? 'text-[28px] font-extrabold text-danger'
             : balance.tone === 'favor'
-              ? 'text-3xl font-extrabold text-success'
-              : 'text-3xl font-extrabold text-ink'
+              ? 'text-[28px] font-extrabold text-success'
+              : 'text-[28px] font-extrabold text-ink'
         }
       >
         {balance.tone === 'pending' ? '-' : ''}
         {balance.amountLabel}
       </p>
-      <p className="mb-3 text-xs text-muted">{balance.label}</p>
+      <p className="mb-2 text-xs text-muted">{balance.label}</p>
 
       {balance.tone === 'pending' ? (
-        <div className="mb-4 h-2 w-full overflow-hidden rounded-pill bg-line">
+        <div className="mb-3 h-2 w-full overflow-hidden rounded-pill bg-line">
           <div
             className="h-full rounded-pill bg-gradient-to-r from-danger to-warning"
             style={{ width: `${progressPercent}%` }}
@@ -49,7 +49,7 @@ export function BalanceCard({ balanceCents, breakdown }: BalanceCardProps) {
       <CategoryBreakdown items={breakdown} />
 
       {balance.tone === 'pending' ? (
-        <div className="mt-4 flex items-start gap-2 rounded-control bg-brand-600/8 px-3 py-2.5 text-xs text-brand-700">
+        <div className="mt-3 flex items-start gap-2 rounded-control bg-brand-600/8 px-3 py-2 text-xs text-brand-700">
           <Info size={15} className="mt-0.5 shrink-0" />
           Este saldo se descontará en la próxima nómina.
         </div>

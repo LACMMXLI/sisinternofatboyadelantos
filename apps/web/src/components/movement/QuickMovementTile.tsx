@@ -26,7 +26,7 @@ export function QuickMovementTile({ label, icon: Icon, tone, onClick }: QuickMov
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-[88px] flex-col items-center justify-center gap-1.5 rounded-card transition hover:brightness-[0.97] active:scale-[0.98]',
+        'flex h-[72px] flex-col items-center justify-center gap-1 rounded-card transition hover:brightness-[0.97] active:scale-[0.98]',
         styles.bg,
       )}
     >

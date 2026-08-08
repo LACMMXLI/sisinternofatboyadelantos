@@ -18,7 +18,7 @@ const PILL_STYLES: Record<MockMovement['categoryColor'], string> = {
 export function MovementRow({ movement }: { movement: MockMovement }) {
   const isCharge = movement.direction === 'CHARGE';
   return (
-    <div className="grid grid-cols-[88px_1fr_100px_90px_84px_28px] items-center gap-2 border-b border-line/70 py-3 text-sm last:border-b-0">
+    <div className="grid grid-cols-[88px_1fr_100px_90px_84px_28px] items-center gap-2 border-b border-line/70 py-2 text-sm last:border-b-0">
       <div className="text-muted">
         <span className="font-medium text-ink">{movement.dateLabel}</span>{' '}
         <span className="text-xs">{movement.timeLabel}</span>

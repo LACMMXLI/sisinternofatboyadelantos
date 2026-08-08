@@ -9,25 +9,29 @@ interface NavItem {
   label: string;
   icon: typeof NotebookText;
   capability: Capability;
+  activeBg: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { to: '/app/libreta', label: 'Libreta', icon: NotebookText, capability: 'movement.create' },
-  { to: '/app/nomina', label: 'Nómina', icon: Wallet, capability: 'payroll.prepare' },
-  { to: '/app/reportes', label: 'Reportes', icon: BarChart3, capability: 'report.read' },
-  { to: '/app/empleados', label: 'Empleados', icon: Users, capability: 'employee.read' },
+  { to: '/app/libreta', label: 'Libreta', icon: NotebookText, capability: 'movement.create', activeBg: 'bg-brand-600' },
+  { to: '/app/nomina', label: 'Nómina', icon: Wallet, capability: 'payroll.prepare', activeBg: 'bg-success' },
+  { to: '/app/reportes', label: 'Reportes', icon: BarChart3, capability: 'report.read', activeBg: 'bg-purple' },
+  { to: '/app/empleados', label: 'Empleados', icon: Users, capability: 'employee.read', activeBg: 'bg-pink' },
   {
     to: '/app/configuracion/negocio',
     label: 'Configuración',
     icon: Settings,
     capability: 'organization.manage',
+    activeBg: 'bg-warning',
   },
 ];
 
 /**
- * Navegación principal (§4.5). Barra inferior fija con iconos grandes y
- * etiquetas claras. Cada destino se filtra por la capacidad del rol —
- * presentación solamente: la protección real vive en cada endpoint (§5).
+ * Navegación principal (§4.5). Barra inferior fija con iconos grandes,
+ * sombra elevada y una píldora de color propia por destino cuando está
+ * activo, para que no se pierda contra el fondo claro de la app. Cada
+ * destino se filtra por la capacidad del rol — presentación solamente: la
+ * protección real vive en cada endpoint (§5).
  */
 export function BottomNav() {
   const { user } = useAuth();
@@ -35,18 +39,18 @@ export function BottomNav() {
 
   return (
     <nav
-      className="sticky bottom-0 z-30 w-full border-t border-line bg-surface/95 backdrop-blur"
+      className="sticky bottom-0 z-30 w-full border-t border-line bg-surface shadow-[0_-6px_20px_rgba(16,32,63,0.1)]"
       aria-label="Navegación principal"
     >
-      <div className="mx-auto flex max-w-[1600px] items-stretch justify-around px-2">
-        {items.map(({ to, label, icon: Icon }) => (
+      <div className="mx-auto flex max-w-[1600px] items-stretch justify-around px-2 py-1.5">
+        {items.map(({ to, label, icon: Icon, activeBg }) => (
           <NavLink
             key={to}
             to={to}
             className={({ isActive }) =>
               cn(
-                'flex min-w-[64px] flex-col items-center gap-1 px-2 py-2.5 text-xs font-medium transition-colors',
-                isActive ? 'text-brand-600' : 'text-muted hover:text-ink',
+                'flex min-w-[60px] flex-col items-center gap-0.5 rounded-2xl px-2 py-1.5 text-[11px] font-semibold transition-colors',
+                isActive ? 'text-ink' : 'text-ink/55 hover:text-ink/80',
               )
             }
           >
@@ -54,11 +58,11 @@ export function BottomNav() {
               <>
                 <span
                   className={cn(
-                    'grid h-9 w-9 place-items-center rounded-2xl',
-                    isActive && 'bg-brand-600/10',
+                    'grid h-8 w-8 place-items-center rounded-xl transition-colors',
+                    isActive ? cn(activeBg, 'text-white shadow-control') : 'text-current',
                   )}
                 >
-                  <Icon size={22} strokeWidth={isActive ? 2.4 : 2} />
+                  <Icon size={19} strokeWidth={isActive ? 2.4 : 2} />
                 </span>
                 {label}
               </>

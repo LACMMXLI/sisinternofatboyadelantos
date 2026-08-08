@@ -13,7 +13,7 @@ interface BreakdownItem {
  */
 export function CategoryBreakdown({ items }: { items: BreakdownItem[] }) {
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-1.5">
       {items.map((item) => (
         <li key={item.label} className="flex items-center justify-between text-sm">
           <span className="flex items-center gap-2 text-ink">

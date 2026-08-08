@@ -34,7 +34,7 @@ export function EmployeeListItem({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition-colors',
+        'flex w-full items-center gap-2.5 rounded-2xl border p-2 text-left transition-colors',
         selected
           ? 'border-brand-500 bg-brand-600/10'
           : 'border-transparent hover:bg-surface-soft',
@@ -42,11 +42,11 @@ export function EmployeeListItem({
     >
       <div className="relative shrink-0">
         {photoUrl ? (
-          <img src={photoUrl} alt="" className="h-11 w-11 rounded-full object-cover" />
+          <img src={photoUrl} alt="" className="h-10 w-10 rounded-full object-cover" />
         ) : (
           <div
             className={cn(
-              'grid h-11 w-11 place-items-center rounded-full text-sm font-bold',
+              'grid h-10 w-10 place-items-center rounded-full text-sm font-bold',
               avatarColor.bg,
               avatarColor.text,
             )}

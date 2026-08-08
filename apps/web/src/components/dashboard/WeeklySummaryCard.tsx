@@ -9,8 +9,8 @@ interface WeeklySummaryCardProps {
 
 export function WeeklySummaryCard({ totalCents, breakdown }: WeeklySummaryCardProps) {
   return (
-    <div className="rounded-card border border-line bg-surface p-5 shadow-control">
-      <div className="mb-3 flex items-center gap-2">
+    <div className="rounded-card border border-line bg-surface p-4 shadow-control">
+      <div className="mb-2 flex items-center gap-2">
         <PieChart size={16} className="text-brand-600" />
         <h3 className="text-sm font-bold text-ink">Resumen de la Semana</h3>
       </div>
