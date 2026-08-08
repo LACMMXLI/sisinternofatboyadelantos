@@ -131,11 +131,12 @@ Formato de error único (`statusCode`, `code`, `message`, `fieldErrors`, `reques
 
 Cada fase se cierra solo si pasa lint + typecheck + tests + build, y deja el sistema operable de extremo a extremo (no solo compilando).
 
-### Fase 1 — Base técnica
-- [ ] Monorepo pnpm, ESLint/Prettier/TS estrictos, `.env.example`, Docker Compose local (Postgres + MinIO opcional), `Dockerfile` esqueleto api/web.
-- [ ] Prisma inicializado, conexión a Postgres, `health/live` y `health/ready`.
-- [ ] Tokens Tailwind/CSS, layout base de 3 columnas, rutas placeholder protegidas por sesión (aún sin lógica real).
-- **Verificación:** `pnpm install`, `pnpm -w lint`, `pnpm -w typecheck`, `docker compose up` levanta Postgres y healthcheck responde 200.
+### Fase 1 — Base técnica ✅ (completada 2026-08-08)
+- [x] Monorepo pnpm, ESLint/Prettier/TS estrictos, `.env.example`, Docker Compose local (Postgres + MinIO opcional), `Dockerfile` esqueleto api/web.
+- [x] Prisma inicializado, conexión a Postgres, `health/live` y `health/ready` (verificado contra PostgreSQL real, `/health/ready` responde `database: up`).
+- [x] Tokens Tailwind/CSS, layout base de 3 columnas (≥1280px, colapsa a 1 columna antes), rutas placeholder protegidas por sesión (aún sin lógica real).
+- **Verificación:** `pnpm install` ✅, `pnpm lint` ✅ (3/3 paquetes), `pnpm typecheck` ✅, `pnpm build` ✅, `pnpm test` ✅, `pnpm --filter api run test:e2e` ✅ (2/2, contra Postgres real), capturas Playwright en los 4 viewports sin scroll horizontal ✅.
+- **Nota de entorno:** en este equipo se usa un PostgreSQL nativo del usuario (no el `postgres` del `docker-compose.yml`, cuyo puerto host por defecto se movió a `5433` para evitar el choque). `DATABASE_URL` real vive solo en `apps/api/.env` (gitignored).
 
 ### Fase 2 — Identidad y acceso
 - [ ] `OrganizationsModule`, `BranchesModule`, `UsersModule`, sesiones (access corto + refresh rotatorio revocable, cookie `HttpOnly`/`Secure`/`SameSite`), Argon2id, rate limiting en login/PIN.
