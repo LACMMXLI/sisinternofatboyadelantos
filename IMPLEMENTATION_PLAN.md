@@ -138,11 +138,14 @@ Cada fase se cierra solo si pasa lint + typecheck + tests + build, y deja el sis
 - **Verificación:** `pnpm install` ✅, `pnpm lint` ✅ (3/3 paquetes), `pnpm typecheck` ✅, `pnpm build` ✅, `pnpm test` ✅, `pnpm --filter api run test:e2e` ✅ (2/2, contra Postgres real), capturas Playwright en los 4 viewports sin scroll horizontal ✅.
 - **Nota de entorno:** en este equipo se usa un PostgreSQL nativo del usuario (no el `postgres` del `docker-compose.yml`, cuyo puerto host por defecto se movió a `5433` para evitar el choque). `DATABASE_URL` real vive solo en `apps/api/.env` (gitignored).
 
-### Fase 2 — Identidad y acceso
-- [ ] `OrganizationsModule`, `BranchesModule`, `UsersModule`, sesiones (access corto + refresh rotatorio revocable, cookie `HttpOnly`/`Secure`/`SameSite`), Argon2id, rate limiting en login/PIN.
-- [ ] RBAC con capacidades + guards por `organizationId`/sucursal.
-- [ ] Login real en frontend, cambio de contraseña obligatorio, navegación por rol.
-- **Verificación:** tests de aislamiento entre organizaciones/sucursales; login/logout/refresh funcionando de punta a punta.
+### Fase 2 — Identidad y acceso ✅ (completada 2026-08-08)
+- [x] `AuthModule` (login, refresh rotatorio, logout, logout-all, change-password, quick-unlock con PIN), `OrganizationsModule`, `BranchesModule`, `UsersModule`. Argon2id, rate limiting por endpoint (`@Throttle`), access token JWT corto (15m) en memoria del cliente, refresh token opaco (hash SHA-256 almacenado, valor crudo en cookie `HttpOnly`/`SameSite=Lax`, un solo uso con rotación).
+- [x] RBAC con capacidades (`@RequireCapability` + `CapabilityGuard`) y alcance de sucursal (`branchIds: 'ALL' | string[]` en el JWT, derivado de `UserBranch`; `OWNER_ADMIN` alcance total).
+- [x] Login real en frontend (`AuthProvider`, RHF+Zod), cambio de contraseña obligatorio, navegación inferior filtrada por capacidad del rol, `EMPLOYEE_SELF_SERVICE` enrutado a `/mi-libreta` en vez de `/app/libreta`.
+- [x] Pantallas de administración funcionales: Negocio (editar nombre/color/moneda/TZ), Sucursales (crear/(des)activar), Usuarios (crear con contraseña temporal revelada una vez, reset de contraseña, cerrar todas las sesiones, (des)activar).
+- **Verificación:** `pnpm --filter api run test:e2e` ✅ 10/10 (login con credenciales incorrectas, `/auth/me`, 401 sin token, 403 sin capacidad, alcance de sucursal del cajero, alcance total del owner, **aislamiento entre 2 organizaciones distintas**, rotación de refresh + revocación del token viejo + logout invalida sesión). QA manual en navegador real: login → cambio de contraseña obligatorio → shell autenticado → sesión persiste tras recargar la página completa → nav filtrado por rol (cajero ve solo Libreta/Empleados) → logout.
+- **Bug real encontrado y corregido en QA:** doble llamada a `/auth/refresh` en el arranque (React StrictMode) chocaba con la rotación de un solo uso del refresh token y podía invalidar la sesión; se corrigió deduplicando la llamada en vuelo (`refreshInFlightRef`) en `AuthProvider`.
+- **Decisión técnica no anticipada:** `packages/shared` se compila a **dual CJS+ESM** (`dist/cjs`, `dist/esm`, con `package.json` marcador de tipo en cada carpeta) — Vite no interopera de forma confiable con un paquete workspace servido como CommonJS simple vía `/@fs/`; este es el patrón estándar para paquetes consumidos tanto por Nest (CJS) como por Vite (ESM).
 
 ### Fase 3 — Empleados y categorías
 - [ ] `EmployeesModule` (alta/edición/baja lógica, fotos vía storage, sucursales múltiples), `MovementCategoriesModule` con reglas de inmutabilidad de dirección.

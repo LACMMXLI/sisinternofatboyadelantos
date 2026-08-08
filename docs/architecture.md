@@ -43,12 +43,18 @@ Gestionado con **pnpm workspaces** (`pnpm-workspace.yaml`). Un único
   orquestador (Docker/Coolify), documentados en `src/health/`.
 - Prefijo de API: `/api/v1` (`setGlobalPrefix('api')` + versionado URI).
 
-Módulos previstos (se agregan módulo por módulo en las fases 2 a 8):
-`AuthModule`, `OrganizationsModule`, `BranchesModule`, `UsersModule`,
-`EmployeesModule`, `MovementCategoriesModule`, `LedgerModule`,
-`PayrollPeriodsModule`, `PayrollBatchesModule`, `ReportsModule`,
-`FilesModule`, `NotificationsModule`, `AuditModule`, `SettingsModule`,
-`HealthModule` (ya implementado).
+Módulos implementados: `HealthModule`, `AuthModule` (login, refresh
+rotatorio, logout, logout-all, change-password, quick-unlock con PIN),
+`OrganizationsModule`, `BranchesModule`, `UsersModule`. RBAC vía
+`JwtAuthGuard` + `CapabilityGuard` (guards globales, `@Public()` para
+excepciones, `@RequireCapability()` por endpoint) — ver
+[permissions.md](permissions.md).
+
+Módulos pendientes (fases 3 a 8): `EmployeesModule`, `MovementCategoriesModule`,
+`LedgerModule`, `PayrollPeriodsModule`, `PayrollBatchesModule`,
+`ReportsModule`, `FilesModule`, `NotificationsModule`, `AuditModule`,
+`SettingsModule` (ajustes ya cubiertos parcialmente por
+`OrganizationsModule`).
 
 ## Frontend (`apps/web`)
 
@@ -76,6 +82,14 @@ Vocabulario compartido sin lógica de servidor sensible: `Role`,
 ledger, estados de lote de nómina. Tanto `apps/api` como `apps/web` lo
 consumen como `@libreta/shared` (workspace dependency) para no duplicar
 strings mágicos entre frontend y backend.
+
+Se compila a **dual CJS + ESM** (`pnpm --filter @libreta/shared run build`
+→ `dist/cjs` y `dist/esm`, cada uno con su propio `package.json` marcador
+de `type`). Es necesario: Nest consume el paquete vía `require()` (CJS) y
+Vite lo sirve como ESM real en desarrollo — servir un CJS simple a través
+de `/@fs/` en Vite no interopera de forma confiable con imports nombrados.
+Cualquier cambio en `packages/shared/src` requiere `pnpm run build:shared`
+(el script `dev`/`build`/`typecheck` raíz ya lo hace automáticamente).
 
 ## Datos y saldo
 

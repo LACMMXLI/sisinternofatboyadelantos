@@ -1,5 +1,7 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppShell } from '@/components/layout/AppShell';
+import { RequireAuth } from '@/app/providers/RequireAuth';
+import { HomeRedirect } from '@/app/providers/HomeRedirect';
 import { LoginPage } from '@/features/auth/pages/LoginPage';
 import { ChangeTemporaryPasswordPage } from '@/features/auth/pages/ChangeTemporaryPasswordPage';
 import { LibretaPage } from '@/features/libreta/pages/LibretaPage';
@@ -16,19 +18,36 @@ import { AuditoriaPage } from '@/features/auditoria/pages/AuditoriaPage';
 import { MiLibretaPage } from '@/features/mi-libreta/pages/MiLibretaPage';
 
 /**
- * Mapa de rutas fijado por §9 del prompt maestro. La protección real por
- * sesión/rol se agrega en la Fase 2 (RequireAuth + guards por capacidad);
- * mientras tanto todas las rutas quedan accesibles para poder verificar el
- * layout visualmente.
+ * Mapa de rutas fijado por §9 del prompt maestro. RequireAuth protege por
+ * presentación (redirige a /login sin sesión, o a cambio de contraseña si
+ * es obligatorio); la protección real por rol/capacidad vive en la API.
  */
 export const router = createBrowserRouter([
-  { path: '/', element: <Navigate to="/app/libreta" replace /> },
+  { path: '/', element: <HomeRedirect /> },
   { path: '/login', element: <LoginPage /> },
-  { path: '/change-temporary-password', element: <ChangeTemporaryPasswordPage /> },
-  { path: '/mi-libreta', element: <MiLibretaPage /> },
+  {
+    path: '/change-temporary-password',
+    element: (
+      <RequireAuth>
+        <ChangeTemporaryPasswordPage />
+      </RequireAuth>
+    ),
+  },
+  {
+    path: '/mi-libreta',
+    element: (
+      <RequireAuth>
+        <MiLibretaPage />
+      </RequireAuth>
+    ),
+  },
   {
     path: '/app',
-    element: <AppShell />,
+    element: (
+      <RequireAuth>
+        <AppShell />
+      </RequireAuth>
+    ),
     children: [
       { index: true, element: <Navigate to="libreta" replace /> },
       { path: 'libreta', element: <LibretaPage /> },

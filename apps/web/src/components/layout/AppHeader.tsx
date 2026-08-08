@@ -1,4 +1,7 @@
-import { Bell, Menu, Search } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Bell, LogOut, Menu, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ROLE_LABELS } from '@libreta/shared';
 import { useAuth } from '@/app/providers/AuthProvider';
 
 interface AppHeaderProps {
@@ -13,12 +16,31 @@ function initialsFrom(name: string): string {
 
 /**
  * AppHeader — encabezado de marca (§4.5). Degradado azul elegante, búsqueda
- * contextual, campana de notificaciones y menú de sesión. La búsqueda y las
- * notificaciones reales se conectan en fases posteriores; aquí queda el
- * contenedor visual y accesible.
+ * contextual, campana de notificaciones y menú de sesión. La búsqueda real
+ * se conecta en la Fase 3 junto con EmployeeSearch.
  */
 export function AppHeader({ onOpenMenu, searchPlaceholder = 'Buscar empleado…' }: AppHeaderProps) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [menuOpen]);
+
+  const handleLogout = async () => {
+    setMenuOpen(false);
+    await logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-30 h-[72px] w-full bg-gradient-to-r from-brand-700 via-brand-600 to-brand-500 text-white shadow-panel md:h-20">
@@ -40,7 +62,7 @@ export function AppHeader({ onOpenMenu, searchPlaceholder = 'Buscar empleado…'
           </div>
           <div className="hidden leading-tight sm:block">
             <p className="font-sans text-[15px] font-bold">Libreta de Nóminas</p>
-            <p className="text-xs text-white/75">{user?.organizationName ?? 'Fatboy'}</p>
+            <p className="text-xs text-white/75">{user?.organizationName ?? ''}</p>
           </div>
         </div>
 
@@ -65,14 +87,43 @@ export function AppHeader({ onOpenMenu, searchPlaceholder = 'Buscar empleado…'
           <span className="absolute top-2 right-2.5 h-2 w-2 rounded-full bg-danger" />
         </button>
 
-        <div className="flex shrink-0 items-center gap-2.5 pl-1">
-          <div className="grid h-10 w-10 place-items-center rounded-full bg-white/20 text-sm font-bold">
-            {initialsFrom(user?.displayName ?? 'Invitado')}
-          </div>
-          <div className="hidden leading-tight sm:block">
-            <p className="text-sm font-semibold">{user?.displayName ?? 'Invitado'}</p>
-            <p className="text-xs text-white/75">{user ? user.role : 'Sin sesión'}</p>
-          </div>
+        <div className="relative shrink-0 pl-1" ref={menuRef}>
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="flex items-center gap-2.5 rounded-control py-1 pr-1 hover:bg-white/10"
+            aria-haspopup="menu"
+            aria-expanded={menuOpen}
+          >
+            <div className="grid h-10 w-10 place-items-center rounded-full bg-white/20 text-sm font-bold">
+              {initialsFrom(user?.displayName ?? '?')}
+            </div>
+            <div className="hidden text-left leading-tight sm:block">
+              <p className="text-sm font-semibold">{user?.displayName ?? ''}</p>
+              <p className="text-xs text-white/75">{user ? ROLE_LABELS[user.role] : ''}</p>
+            </div>
+          </button>
+
+          {menuOpen ? (
+            <div
+              role="menu"
+              className="absolute top-full right-0 mt-2 w-56 rounded-card border border-line bg-surface p-1.5 text-ink shadow-panel"
+            >
+              <div className="px-3 py-2 sm:hidden">
+                <p className="text-sm font-semibold">{user?.displayName}</p>
+                <p className="text-xs text-muted">{user ? ROLE_LABELS[user.role] : ''}</p>
+              </div>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => void handleLogout()}
+                className="flex w-full items-center gap-2.5 rounded-control px-3 py-2.5 text-sm font-medium text-danger hover:bg-danger-soft"
+              >
+                <LogOut size={17} />
+                Cerrar sesión
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
     </header>

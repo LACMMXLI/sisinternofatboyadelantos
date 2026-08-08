@@ -64,6 +64,20 @@ pnpm install
 
 4. Swagger disponible en `http://localhost:3000/api/docs` (desactivado en
    producción). Salud: `http://localhost:3000/health/live` y `/health/ready`.
+5. (Opcional) Datos de desarrollo: `pnpm --filter api run seed`.
+
+## Usuarios de desarrollo (seed)
+
+> Solo development. Nunca se ejecuta en producción. Todos con contraseña
+> temporal `CambiaEsto123!` (obliga a cambiarla en el primer login).
+
+| Usuario | Rol |
+|---|---|
+| `owner` | Propietario / Administrador |
+| `nomina` | Encargado de nómina |
+| `gerente` | Gerente general |
+| `encargado.venecia` | Encargado de sucursal (Venecia) |
+| `cajero.venecia` | Cajero / Registrador (Venecia) |
 
 ## Comandos de calidad
 
