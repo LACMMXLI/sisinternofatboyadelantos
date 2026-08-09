@@ -193,11 +193,14 @@ Cada fase se cierra solo si pasa lint + typecheck + tests + build, y deja el sis
 - [ ] CSS `@media print` para recibos 58/80mm y resumen carta/A4.
 - **Verificación:** prueba de duplicación/reintento offline→online sin duplicar cargos.
 
-### Fase 8 — Calidad y entrega
-- [ ] `ReportsModule` completo con filtros y export.
+### Fase 8 — Calidad y entrega (en progreso — reportes ✅, resto pendiente)
+- [x] `ReportsModule` (`apps/api/src/reports`): `GET /reports/movements` (filtros por sucursal/empleado/categoría/estado/fecha, totales agregados —cargos/abonos/neto/desglose por categoría—, mismo alcance por sucursal que el resto del sistema), `GET /reports/movements/export.csv` (mismos filtros, saneado contra inyección de fórmulas), `GET /reports/balances` (saldo por empleado activo en alcance, una sola consulta agregada — sin el N+1 que sí es razonable en el frontend de la Libreta). Capacidad `report.read` (único gate — `CASHIER_RECORDER` no la tiene).
+- [x] `ReportesPage` conectada a la API real: pestañas Movimientos/Saldos, filtros, tarjetas de totales, tabla, botón "Exportar CSV" (`apiFetchBlob`, mismo mecanismo que el PDF de nómina).
 - [ ] Suite E2E Playwright (los 10 escenarios del prompt maestro §15) + capturas en los 4 viewports.
-- [ ] Hardening de seguridad (Helmet, CSP, saneo de exports contra CSV injection, revisión de logs sin secretos).
+- [ ] Hardening de seguridad final (Helmet ya está desde Fase 1; falta CSP explícito, revisión de logs sin secretos, checklist completo de §11).
 - [ ] Dockerfiles multi-stage finales, `docs/deployment.md` con guía Coolify paso a paso.
+- **Verificación:** `pnpm run typecheck/lint` ✅ en todo el monorepo, `pnpm --filter web run build` ✅. `pnpm --filter api run test:e2e` ✅ **42/42** (4 nuevos en `test/reports.e2e-spec.ts`: cajero sin `report.read` → 403 en los 3 endpoints, totales correctos con cargo+abono reales, CSV saneado —una celda `=SUM(A1:A10)` sale como `'=SUM(A1:A10)`, no como fórmula ejecutable—, encargado de sucursal no ve movimientos/saldos de una sucursal ajena). QA manual en navegador contra la API real: alta de empleado + adelanto de $450 → aparece en Movimientos con sus totales correctos → aparece en Saldos con el mismo monto → exportar CSV dispara la descarga real (`200 OK` confirmado por red).
+- **Decisión de diseño:** el reporte de saldos resuelve el saldo de *todos* los empleados en alcance con una sola consulta `groupBy` agregada, a diferencia del `useQueries` (N+1) que usa `EmployeeList` en la Libreta — ahí el N+1 es razonable porque la lista ya está renderizada de todos modos; aquí, como el reporte existe específicamente para listar a todos, hacerlo en una sola consulta es la solución correcta, no una optimización prematura.
 
 ---
 

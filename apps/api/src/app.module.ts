@@ -17,6 +17,7 @@ import { EmployeesModule } from './employees/employees.module';
 import { MovementCategoriesModule } from './movement-categories/movement-categories.module';
 import { LedgerModule } from './ledger/ledger.module';
 import { PayrollModule } from './payroll/payroll.module';
+import { ReportsModule } from './reports/reports.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { PayrollModule } from './payroll/payroll.module';
     MovementCategoriesModule,
     LedgerModule,
     PayrollModule,
+    ReportsModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
