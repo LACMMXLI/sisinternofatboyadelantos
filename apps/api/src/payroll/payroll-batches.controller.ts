@@ -2,10 +2,12 @@ import {
   Body,
   Controller,
   Get,
+  Header,
   Param,
   Patch,
   Post,
   Query,
+  StreamableFile,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { PayrollBatchesService } from './payroll-batches.service';
@@ -42,6 +44,17 @@ export class PayrollBatchesController {
   @Get(':id')
   get(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.payrollBatchesService.get(user, id);
+  }
+
+  @Get(':id/export/pdf')
+  @Header('Content-Type', 'application/pdf')
+  @Header('Content-Disposition', 'attachment; filename="nomina.pdf"')
+  async exportPdf(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: string,
+  ) {
+    const pdf = await this.payrollBatchesService.exportPdf(user, id);
+    return new StreamableFile(pdf);
   }
 
   @RequireCapability('payroll.prepare')

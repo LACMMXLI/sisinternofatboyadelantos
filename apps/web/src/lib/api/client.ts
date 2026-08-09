@@ -106,3 +106,36 @@ export async function apiFetch<T>(path: string, options: ApiRequestOptions = {})
 
   return (await response.json()) as T;
 }
+
+/**
+ * Igual que `apiFetch` (mismo manejo de auth/refresh) pero para respuestas
+ * binarias (ej. exportaciones PDF) — nunca intenta `response.json()`.
+ */
+export async function apiFetchBlob(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<Blob> {
+  let response = await rawFetch(path, options);
+
+  if (response.status === 401 && !options.skipAuthRetry && authHandlers) {
+    const newToken = await authHandlers.refreshAccessToken();
+    if (newToken) {
+      response = await rawFetch(path, options);
+    } else {
+      authHandlers.onSessionExpired();
+    }
+  }
+
+  if (!response.ok) {
+    const payload = await parseErrorBody(response);
+    throw new ApiError(
+      payload.message ?? 'Ocurrió un error al comunicarse con el servidor.',
+      response.status,
+      payload.code,
+      payload.fieldErrors,
+      payload.requestId,
+    );
+  }
+
+  return response.blob();
+}

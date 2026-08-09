@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiFetch } from '@/lib/api/client';
+import { apiFetch, apiFetchBlob } from '@/lib/api/client';
 import type { PayrollBatchStatus, PayrollPeriodFrequency } from '@libreta/shared';
 
 export interface PayrollPeriodView {
@@ -149,5 +149,22 @@ export function useReopenBatch() {
         body: { reason },
       }),
     onSuccess: (_data, variables) => invalidateBatch(queryClient, variables.batchId),
+  });
+}
+
+/** Descarga el PDF del lote y dispara el guardado en el navegador. */
+export function useExportBatchPdf() {
+  return useMutation({
+    mutationFn: async ({ batchId, filename }: { batchId: string; filename: string }) => {
+      const blob = await apiFetchBlob(`/payroll-batches/${batchId}/export/pdf`);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    },
   });
 }

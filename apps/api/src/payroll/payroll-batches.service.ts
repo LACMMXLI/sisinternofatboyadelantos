@@ -10,6 +10,7 @@ import { roleHasCapability } from '@libreta/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmployeesService } from '../employees/employees.service';
 import { accessibleBranchIds } from '../common/scope/branch-scope.util';
+import { PayrollPdfService } from './payroll-pdf.service';
 import type { AuthenticatedUser } from '../common/types/authenticated-request';
 import type { PrepareBatchDto } from './dto/prepare-batch.dto';
 import type { ListBatchesQueryDto } from './dto/list-batches.dto';
@@ -59,7 +60,13 @@ const batchSelect = {
       balanceAfterCents: true,
       ledgerMovementId: true,
       employee: {
-        select: { id: true, displayName: true, employeeNumber: true },
+        select: {
+          id: true,
+          displayName: true,
+          employeeNumber: true,
+          jobTitle: true,
+          primaryBranch: { select: { id: true, name: true } },
+        },
       },
     },
   },
@@ -80,6 +87,7 @@ export class PayrollBatchesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly employeesService: EmployeesService,
+    private readonly payrollPdfService: PayrollPdfService,
   ) {}
 
   async prepare(user: AuthenticatedUser, dto: PrepareBatchDto) {
@@ -174,6 +182,12 @@ export class PayrollBatchesService {
   async get(user: AuthenticatedUser, batchId: string) {
     this.assertPayrollCapability(user);
     return this.getOwnedBatch(user, batchId);
+  }
+
+  async exportPdf(user: AuthenticatedUser, batchId: string) {
+    this.assertPayrollCapability(user);
+    const batch = await this.getOwnedBatch(user, batchId);
+    return this.payrollPdfService.generate(user.organizationId, batch);
   }
 
   async updateItem(

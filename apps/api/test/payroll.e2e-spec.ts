@@ -249,6 +249,16 @@ describe('Payroll (e2e)', () => {
     // 10000 - 6000 aplicados = 4000 se arrastra, no llega a cero.
     expect(summaryAfterApply.body.balanceCents).toBe(4000);
 
+    const pdf = await request(app.getHttpServer())
+      .get(`/api/v1/payroll-batches/${batch.body.id as string}/export/pdf`)
+      .set('Authorization', `Bearer ${owner.accessToken}`)
+      .expect(200);
+    expect(pdf.headers['content-type']).toBe('application/pdf');
+    expect(Buffer.isBuffer(pdf.body)).toBe(true);
+    const pdfBuffer = pdf.body as Buffer;
+    expect(pdfBuffer.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+    expect(pdfBuffer.length).toBeGreaterThan(1000);
+
     // El cajero no puede cerrar (403) ni reabrir (403): falta payroll.close/reopen.
     await request(app.getHttpServer())
       .post(`/api/v1/payroll-batches/${batch.body.id as string}/close`)

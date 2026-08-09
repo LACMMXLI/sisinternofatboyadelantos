@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Receipt } from 'lucide-react';
+import { ArrowLeft, Download, Receipt } from 'lucide-react';
 import {
   usePayrollBatch,
   useApplyBatch,
   useCloseBatch,
+  useExportBatchPdf,
   useLockBatch,
   useReopenBatch,
   useSubmitBatch,
@@ -39,6 +40,7 @@ export function NominaBatchPage() {
   const applyBatch = useApplyBatch();
   const closeBatch = useCloseBatch();
   const reopenBatch = useReopenBatch();
+  const exportPdf = useExportBatchPdf();
 
   const [error, setError] = useState<string | null>(null);
   const [reopenReason, setReopenReason] = useState('');
@@ -97,6 +99,19 @@ export function NominaBatchPage() {
         <span className="shrink-0 rounded-pill bg-brand-600/10 px-3 py-1.5 text-xs font-semibold text-brand-700">
           {STATUS_LABELS[batch.status]}
         </span>
+        <button
+          type="button"
+          onClick={() =>
+            void exportPdf.mutateAsync({
+              batchId: batch.id,
+              filename: `nomina-${DATE_FORMAT.format(new Date(batch.period.startsAt)).replace(/\s/g, '-')}.pdf`,
+            })
+          }
+          disabled={exportPdf.isPending}
+          className="flex h-9 shrink-0 items-center gap-1.5 rounded-control border border-line px-3 text-xs font-semibold text-ink hover:bg-surface-soft disabled:opacity-60"
+        >
+          <Download size={14} /> {exportPdf.isPending ? 'Generando…' : 'Exportar PDF'}
+        </button>
       </div>
 
       {batch.reopenReason ? (
