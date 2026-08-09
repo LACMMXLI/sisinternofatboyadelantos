@@ -1,209 +1,155 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useQueries } from '@tanstack/react-query';
-import { MessageSquareText, Plus } from 'lucide-react';
-import { EmployeeList, type EmployeeListEntry } from '@/components/employees/EmployeeList';
-import { EmployeeIdentityCard } from '@/components/employees/EmployeeIdentityCard';
-import { NotebookShell } from '@/components/notebook/NotebookShell';
-import type { NotebookRowMovement } from '@/components/notebook/MovementRow';
-import { BalanceCard } from '@/components/balance/BalanceCard';
-import { QuickMovementGrid } from '@/components/movement/QuickMovementGrid';
-import { NewMovementSheet } from '@/components/movement/NewMovementSheet';
-import { RecentActivityCard, type RecentActivityItem } from '@/components/dashboard/RecentActivityCard';
-import { WeeklySummaryCard } from '@/components/dashboard/WeeklySummaryCard';
-import { QuickActionsCard } from '@/components/dashboard/QuickActionsCard';
+import { useMemo, useState } from 'react';
+import { NotebookPen } from 'lucide-react';
+import { DayHeader } from '@/components/notebook/DayHeader';
+import { DailySheet } from '@/components/notebook/DailySheet';
+import { QuickCaptureBar } from '@/components/movement/QuickCaptureBar';
+import { MobileCaptureSheet } from '@/components/movement/MobileCaptureSheet';
+import { EmployeeDetailDrawer } from '@/components/employees/EmployeeDetailDrawer';
+import { RecentEmployeesStrip } from '@/components/employees/RecentEmployeesStrip';
 import { useEmployees } from '@/features/empleados/api';
-import { useMovementCategories } from '@/features/configuracion/api';
-import { useLedgerSummary, useMovements, type LedgerSummary } from '@/features/libreta/api';
-import { apiFetch } from '@/lib/api/client';
-
-const TABS = ['Movimientos', 'Resumen', 'Historial Semanal', 'Notas'];
-
-const DATE_FORMAT = new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 'short' });
-const TIME_FORMAT = new Intl.DateTimeFormat('es-MX', { hour: '2-digit', minute: '2-digit' });
+import { useMovementCategories, useBranches } from '@/features/configuracion/api';
+import { useDailyMovements } from '@/features/libreta/api';
+import { businessDayRangeUtc, formatFullSpanishDate, todayBusinessDateKey, addDaysToDateKey } from '@/lib/utils/date';
 
 /**
- * Pantalla insignia (§4.5), conectada a datos reales desde la Fase 4:
- * `EmployeesModule` + `LedgerModule`. Los widgets secundarios de la fila
- * inferior (`RecentActivityCard`, `WeeklySummaryCard`) derivan del mismo
- * resumen/movimientos reales — no queda ningún dato de ejemplo visible en
- * esta pantalla. `QuickActionsCard` sigue siendo estático a propósito: sus
- * acciones (historial completo, imprimir, enviar a nómina) llegan en fases
- * posteriores (7/8/5).
+ * Pantalla insignia — "Libreta del día" (corrección 2026-08-09, ver
+ * `IMPLEMENTATION_PLAN.md`). Cambio de modelo mental: de "seleccionar
+ * empleado → consultar saldo" a "abrir la libreta de hoy → ver todo lo
+ * anotado → escribir la siguiente anotación → consultar un empleado solo
+ * cuando haga falta". El empleado es un dato de cada anotación, no el dueño
+ * de la pantalla.
  */
 export function LibretaPage() {
-  const { data: employees } = useEmployees({ active: true });
+  const [dateKey, setDateKey] = useState(todayBusinessDateKey());
+  const [branchId, setBranchId] = useState<string | undefined>(undefined);
+  const [sortAsc, setSortAsc] = useState(false);
+  const [drawerEmployeeId, setDrawerEmployeeId] = useState<string | null>(null);
+  const [mobileCaptureOpen, setMobileCaptureOpen] = useState(false);
+
+  const { data: branches } = useBranches();
+  const activeBranchId = branchId ?? branches?.[0]?.id;
+  const { data: employees } = useEmployees({ active: true, branchId: activeBranchId });
   const { data: categories } = useMovementCategories(false);
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('Movimientos');
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [sheetCategoryId, setSheetCategoryId] = useState<string | undefined>(undefined);
-
-  useEffect(() => {
-    if (!selectedId && employees && employees.length > 0) {
-      setSelectedId(employees[0].id);
-    }
-  }, [employees, selectedId]);
-
-  const balanceQueries = useQueries({
-    queries: (employees ?? []).map((emp) => ({
-      queryKey: ['ledger-summary', emp.id],
-      queryFn: () => apiFetch<LedgerSummary>(`/employees/${emp.id}/ledger/summary`),
-      staleTime: 15_000,
-    })),
+  const { from, to } = useMemo(() => businessDayRangeUtc(dateKey), [dateKey]);
+  const { data: movements, isLoading } = useDailyMovements({
+    fromIso: from.toISOString(),
+    toIso: to.toISOString(),
+    branchId: activeBranchId,
   });
 
-  const employeeListEntries: EmployeeListEntry[] = useMemo(
-    () =>
-      (employees ?? []).map((emp, index) => ({
-        id: emp.id,
-        displayName: emp.displayName,
-        jobTitle: emp.jobTitle || 'Sin puesto',
-        balanceCents: balanceQueries[index]?.data?.balanceCents ?? 0,
-        active: emp.active,
-      })),
-    [employees, balanceQueries],
-  );
+  const isToday = dateKey === todayBusinessDateKey();
+  const dateLabel = formatFullSpanishDate(dateKey);
 
-  const employee = employees?.find((e) => e.id === selectedId);
-  const { data: summary } = useLedgerSummary(selectedId ?? undefined);
-  const { data: movements } = useMovements(selectedId ?? undefined);
+  const sortedMovements = useMemo(() => {
+    const list = [...(movements ?? [])];
+    list.sort((a, b) => {
+      const diff = new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime();
+      return sortAsc ? diff : -diff;
+    });
+    return list;
+  }, [movements, sortAsc]);
 
-  const notebookMovements: NotebookRowMovement[] = useMemo(
-    () =>
-      (movements ?? [])
-        .filter((m) => m.status !== 'REJECTED')
-        .map((m) => {
-          const occurred = new Date(m.occurredAt);
-          return {
-            id: m.id,
-            dateLabel: DATE_FORMAT.format(occurred),
-            timeLabel: TIME_FORMAT.format(occurred),
-            concept:
-              m.status === 'PENDING_APPROVAL'
-                ? `${m.concept} (pendiente)`
-                : m.status === 'REVERSED'
-                  ? `${m.concept} (revertido)`
-                  : m.concept,
-            categoryLabel: m.category.label,
-            categoryColorToken: m.category.colorToken,
-            direction: m.direction,
-            amountCents: m.amountCents,
-            registeredBy: m.createdBy?.displayName ?? '—',
-          };
-        }),
-    [movements],
-  );
-
-  const recentActivity: RecentActivityItem[] = useMemo(() => {
-    const todayKey = new Date().toDateString();
-    return (movements ?? [])
-      .filter((m) => m.status === 'POSTED' && new Date(m.occurredAt).toDateString() === todayKey)
-      .slice(0, 3)
-      .map((m) => ({
-        id: m.id,
-        timeLabel: TIME_FORMAT.format(new Date(m.occurredAt)),
-        label: m.concept,
-        amountCents: m.amountCents,
-        iconName: m.category.iconName,
-        colorToken: m.category.colorToken,
-      }));
+  const stats = useMemo(() => {
+    const list = movements ?? [];
+    let chargeCents = 0;
+    let creditCents = 0;
+    let pendingCount = 0;
+    for (const m of list) {
+      if (m.status === 'PENDING_APPROVAL') pendingCount += 1;
+      if (m.status !== 'POSTED') continue;
+      if (m.direction === 'CHARGE') chargeCents += m.amountCents;
+      else creditCents += m.amountCents;
+    }
+    return { count: list.length, chargeCents, creditCents, pendingCount };
   }, [movements]);
 
-  const breakdown = useMemo(() => {
-    const items = summary?.breakdown ?? [];
-    const total = items.reduce((sum, item) => sum + item.amountCents, 0) || 1;
-    return items.map((item) => ({
-      label: item.label,
-      amountCents: item.amountCents,
-      colorVar: `var(--${item.colorToken})`,
-      percent: Math.round((item.amountCents / total) * 100),
-    }));
-  }, [summary]);
+  const recentEmployees = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const m of sortedMovements) {
+      if (m.employee && !seen.has(m.employee.id)) seen.set(m.employee.id, m.employee.displayName);
+      if (seen.size >= 8) break;
+    }
+    return [...seen.entries()].map(([id, displayName]) => ({ id, displayName }));
+  }, [sortedMovements]);
 
-  const firstName = employee?.displayName.split(' ')[0] ?? '';
+  const employeeOptions = useMemo(
+    () =>
+      (employees ?? []).map((e) => ({
+        id: e.id,
+        displayName: e.displayName,
+        jobTitle: e.jobTitle || 'Sin puesto',
+        employeeNumber: e.employeeNumber,
+      })),
+    [employees],
+  );
 
-  const openSheet = (categoryId?: string) => {
-    setSheetCategoryId(categoryId);
-    setSheetOpen(true);
+  const resolveBranchId = (employeeId: string): string | undefined => {
+    const employee = employees?.find((e) => e.id === employeeId);
+    return employee?.primaryBranchId ?? activeBranchId;
   };
 
   return (
-    <div className="space-y-3.5">
-      <div className="grid gap-3.5 xl:grid-cols-[280px_minmax(560px,1fr)_300px]">
-        <EmployeeList
-          employees={employeeListEntries}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          onNewMovement={() => openSheet()}
+    <div className="space-y-3.5 pb-24 md:pb-3.5">
+      <DayHeader
+        dateKey={dateKey}
+        dateLabel={dateLabel}
+        isToday={isToday}
+        onPrevDay={() => setDateKey((d) => addDaysToDateKey(d, -1))}
+        onNextDay={() => setDateKey((d) => addDaysToDateKey(d, 1))}
+        onToday={() => setDateKey(todayBusinessDateKey())}
+        onPickDate={setDateKey}
+        branches={branches ?? []}
+        branchId={activeBranchId}
+        onBranchChange={setBranchId}
+        stats={stats}
+      />
+
+      {recentEmployees.length > 0 ? (
+        <RecentEmployeesStrip employees={recentEmployees} onSelect={setDrawerEmployeeId} />
+      ) : null}
+
+      <div className="grid gap-3.5 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <DailySheet
+          movements={isLoading ? [] : sortedMovements}
+          sortAsc={sortAsc}
+          onToggleSort={() => setSortAsc((v) => !v)}
+          onEmployeeClick={setDrawerEmployeeId}
+          netCents={stats.chargeCents - stats.creditCents}
+          hasEmployees={(employees?.length ?? 0) > 0}
+          onEmptyCta={() => setMobileCaptureOpen(true)}
         />
 
-        <div className="rounded-card border border-line bg-surface p-4 shadow-control xl:min-h-[70vh]">
-          {employee ? (
-            <>
-              <EmployeeIdentityCard
-                displayName={employee.displayName}
-                jobTitle={employee.jobTitle || 'Sin puesto'}
-                employeeNumber={employee.employeeNumber}
-                active={employee.active}
-                tabs={TABS}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-              />
-              <NotebookShell
-                employeeFirstName={firstName}
-                periodLabel="Saldo actual"
-                movements={notebookMovements}
-                totalCents={summary?.balanceCents ?? 0}
-              />
-            </>
-          ) : (
-            <p className="p-6 text-center text-sm text-muted">
-              {employees?.length === 0
-                ? 'No hay empleados activos. Da de alta uno en Empleados.'
-                : 'Selecciona un empleado.'}
-            </p>
-          )}
-        </div>
-
-        <div className="space-y-2.5">
-          <BalanceCard balanceCents={summary?.balanceCents ?? 0} breakdown={breakdown} />
-
-          <button
-            type="button"
-            onClick={() => openSheet()}
-            disabled={!employee}
-            className="flex h-11 w-full items-center justify-center gap-2 rounded-control bg-success text-sm font-semibold text-white shadow-control transition hover:brightness-105 disabled:opacity-60"
-          >
-            <Plus size={18} /> Nuevo Movimiento
-          </button>
-
-          <QuickMovementGrid categories={categories ?? []} onSelectCategory={(id) => openSheet(id)} />
-
-          <button
-            type="button"
-            className="flex h-10 w-full items-center justify-center gap-2 rounded-control bg-brand-600/8 text-sm font-semibold text-brand-700 hover:bg-brand-600/14"
-          >
-            <MessageSquareText size={16} /> Nota / Comentario
-          </button>
+        <div className="hidden xl:block">
+          <QuickCaptureBar employees={employeeOptions} categories={categories ?? []} resolveBranchId={resolveBranchId} />
         </div>
       </div>
 
-      <div className="grid gap-3.5 lg:grid-cols-3">
-        <RecentActivityCard items={recentActivity} />
-        <WeeklySummaryCard totalCents={summary?.balanceCents ?? 0} breakdown={breakdown} />
-        <QuickActionsCard />
+      {/* Tablet: captura visible bajo la hoja, sin necesidad de sheet (§7). */}
+      <div className="hidden md:block xl:hidden">
+        <QuickCaptureBar employees={employeeOptions} categories={categories ?? []} resolveBranchId={resolveBranchId} />
       </div>
 
-      {sheetOpen && employee ? (
-        <NewMovementSheet
-          employeeId={employee.id}
-          employeeDisplayName={employee.displayName}
-          branchId={employee.primaryBranchId}
+      {/* Móvil: botón fijo + bottom sheet (§7). */}
+      <button
+        type="button"
+        onClick={() => setMobileCaptureOpen(true)}
+        className="fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex h-14 items-center gap-2 rounded-full bg-success px-5 text-sm font-bold text-white shadow-panel md:hidden"
+      >
+        <NotebookPen size={18} /> Anotar movimiento
+      </button>
+
+      {mobileCaptureOpen ? (
+        <MobileCaptureSheet
+          employees={employeeOptions}
           categories={categories ?? []}
-          initialCategoryId={sheetCategoryId}
-          onClose={() => setSheetOpen(false)}
+          resolveBranchId={resolveBranchId}
+          onClose={() => setMobileCaptureOpen(false)}
         />
+      ) : null}
+
+      {drawerEmployeeId ? (
+        <EmployeeDetailDrawer employeeId={drawerEmployeeId} onClose={() => setDrawerEmployeeId(null)} />
       ) : null}
     </div>
   );

@@ -29,6 +29,8 @@ export interface MovementView {
   category: MovementCategoryRef;
   createdBy: { id: string; displayName: string } | null;
   approvedBy: { id: string; displayName: string } | null;
+  employee: { id: string; displayName: string; employeeNumber: string } | null;
+  branch: { id: string; name: string } | null;
 }
 
 export interface LedgerBreakdownItem {
@@ -61,6 +63,30 @@ export function useMovements(employeeId: string | undefined) {
   });
 }
 
+export interface DailyMovementsParams {
+  fromIso: string;
+  toIso: string;
+  branchId?: string;
+}
+
+/**
+ * Movimientos de la jornada (§ pantalla "Libreta del día"): reutiliza
+ * `GET /movements` con `from`/`to` en vez de filtrar por un solo empleado,
+ * para poder mostrar en una sola hoja los movimientos de todos los
+ * empleados del día seleccionado. Los límites de fecha se calculan en
+ * `America/Tijuana` (ver `lib/utils/date.ts`), nunca con `toDateString()`.
+ */
+export function useDailyMovements({ fromIso, toIso, branchId }: DailyMovementsParams) {
+  return useQuery({
+    queryKey: ['movements', 'daily', fromIso, toIso, branchId ?? 'all'],
+    queryFn: () => {
+      const params = new URLSearchParams({ from: fromIso, to: toIso });
+      if (branchId) params.set('branchId', branchId);
+      return apiFetch<MovementView[]>(`/movements?${params.toString()}`);
+    },
+  });
+}
+
 export interface CreateMovementInput {
   employeeId: string;
   branchId: string;
@@ -76,9 +102,32 @@ export function useCreateMovement() {
   return useMutation({
     mutationFn: (body: CreateMovementInput) =>
       apiFetch<MovementView>('/movements', { method: 'POST', body }),
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: ['movements', variables.employeeId] });
-      void queryClient.invalidateQueries({ queryKey: ['ledger-summary', variables.employeeId] });
+    onSuccess: () => {
+      // Invalida toda la familia 'movements' (incluye la hoja diaria
+      // ['movements','daily',...] y el historial de un empleado
+      // ['movements', employeeId]) para que la anotación aparezca sin
+      // recargar manualmente, sin importar desde qué vista se registró.
+      void queryClient.invalidateQueries({ queryKey: ['movements'] });
+      void queryClient.invalidateQueries({ queryKey: ['ledger-summary'] });
     },
   });
 }
+
+function useMovementMutation(action: 'approve' | 'reject' | 'reverse') {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      apiFetch<MovementView>(`/movements/${id}/${action}`, {
+        method: 'POST',
+        body: action === 'reject' ? { reason } : action === 'reverse' ? { reason } : undefined,
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['movements'] });
+      void queryClient.invalidateQueries({ queryKey: ['ledger-summary'] });
+    },
+  });
+}
+
+export const useApproveMovement = () => useMovementMutation('approve');
+export const useRejectMovement = () => useMovementMutation('reject');
+export const useReverseMovement = () => useMovementMutation('reverse');

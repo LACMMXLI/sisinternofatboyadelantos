@@ -53,6 +53,10 @@ const movementSelect = {
   },
   createdBy: { select: { id: true, displayName: true } },
   approvedBy: { select: { id: true, displayName: true } },
+  employee: {
+    select: { id: true, displayName: true, employeeNumber: true },
+  },
+  branch: { select: { id: true, name: true } },
 } satisfies Prisma.LedgerMovementSelect;
 
 const DEFAULT_APPROVAL_THRESHOLD_CENTS = 100_000;
