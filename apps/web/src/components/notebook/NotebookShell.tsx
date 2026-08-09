@@ -1,13 +1,12 @@
 import { Calendar, ChevronDown } from 'lucide-react';
 import { NotebookRings } from './NotebookRings';
-import { MovementRow } from './MovementRow';
+import { MovementRow, type NotebookRowMovement } from './MovementRow';
 import { formatCentsToMXN } from '@/lib/utils/money';
-import type { MockMovement } from '@/features/libreta/mockData';
 
 interface NotebookShellProps {
   employeeFirstName: string;
   periodLabel: string;
-  movements: MockMovement[];
+  movements: NotebookRowMovement[];
   totalCents: number;
 }
 

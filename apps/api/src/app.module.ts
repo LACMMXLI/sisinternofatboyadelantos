@@ -15,6 +15,7 @@ import { BranchesModule } from './branches/branches.module';
 import { UsersModule } from './users/users.module';
 import { EmployeesModule } from './employees/employees.module';
 import { MovementCategoriesModule } from './movement-categories/movement-categories.module';
+import { LedgerModule } from './ledger/ledger.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { MovementCategoriesModule } from './movement-categories/movement-categor
     UsersModule,
     EmployeesModule,
     MovementCategoriesModule,
+    LedgerModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

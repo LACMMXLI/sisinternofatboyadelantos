@@ -1,13 +1,20 @@
 import { MoreVertical } from 'lucide-react';
 import { formatCentsToMXN } from '@/lib/utils/money';
+import { categoryColorStyles } from '@/lib/utils/categoryColors';
+import type { MovementDirection } from '@libreta/shared';
 import { cn } from '@/lib/utils/cn';
-import type { MockMovement } from '@/features/libreta/mockData';
 
-const PILL_STYLES: Record<MockMovement['categoryColor'], string> = {
-  danger: 'bg-danger-soft text-danger',
-  warning: 'bg-warning-soft text-warning',
-  purple: 'bg-purple-soft text-purple',
-};
+export interface NotebookRowMovement {
+  id: string;
+  dateLabel: string;
+  timeLabel: string;
+  concept: string;
+  categoryLabel: string;
+  categoryColorToken: string;
+  direction: MovementDirection;
+  amountCents: number;
+  registeredBy: string;
+}
 
 /**
  * Fila de movimiento dentro de la hoja de la libreta (referencia visual 1):
@@ -15,8 +22,9 @@ const PILL_STYLES: Record<MockMovement['categoryColor'], string> = {
  * registró. El color nunca es el único indicador de dirección (§14): el
  * signo "-"/"+" siempre acompaña al monto.
  */
-export function MovementRow({ movement }: { movement: MockMovement }) {
+export function MovementRow({ movement }: { movement: NotebookRowMovement }) {
   const isCharge = movement.direction === 'CHARGE';
+  const pillStyles = categoryColorStyles(movement.categoryColorToken);
   return (
     <div className="grid grid-cols-[88px_1fr_100px_90px_84px_28px] items-center gap-2 border-b border-line/70 py-2 text-sm last:border-b-0">
       <div className="text-muted">
@@ -28,7 +36,8 @@ export function MovementRow({ movement }: { movement: MockMovement }) {
         <span
           className={cn(
             'inline-block rounded-pill px-2.5 py-1 text-xs font-semibold',
-            PILL_STYLES[movement.categoryColor],
+            pillStyles.bg,
+            pillStyles.text,
           )}
         >
           {movement.categoryLabel}

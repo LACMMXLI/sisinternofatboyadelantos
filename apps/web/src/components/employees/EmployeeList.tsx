@@ -1,9 +1,16 @@
 import { ListFilter, Plus, Users } from 'lucide-react';
 import { EmployeeListItem } from './EmployeeListItem';
-import type { MockEmployee } from '@/features/libreta/mockData';
+
+export interface EmployeeListEntry {
+  id: string;
+  displayName: string;
+  jobTitle: string;
+  balanceCents: number;
+  active: boolean;
+}
 
 interface EmployeeListProps {
-  employees: MockEmployee[];
+  employees: EmployeeListEntry[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onNewMovement: () => void;
