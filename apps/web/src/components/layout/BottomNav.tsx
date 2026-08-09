@@ -50,7 +50,7 @@ export function BottomNav() {
             className={({ isActive }) =>
               cn(
                 'flex min-w-[60px] flex-col items-center gap-0.5 rounded-2xl px-2 py-1.5 text-[11px] font-semibold transition-colors',
-                isActive ? 'text-ink' : 'text-ink/55 hover:text-ink/80',
+                isActive ? 'text-ink' : 'text-muted hover:text-ink',
               )
             }
           >

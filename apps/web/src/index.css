@@ -68,6 +68,24 @@
     touch-action: manipulation;
   }
 
+  /* Defensa explícita para inputs/selects/textareas: algunos motores de
+     render aplican su propio color de texto "nativo" a partir de
+     `color-scheme` en vez de heredar `color` del árbol, lo que puede volver
+     el texto invisible en modo oscuro. Se fija explícito en vez de confiar
+     en la herencia. */
+  input,
+  select,
+  textarea {
+    color: var(--color-ink);
+    background-color: transparent;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-muted);
+    opacity: 1;
+  }
+
   ::selection {
     background-color: var(--brand-500);
     color: white;

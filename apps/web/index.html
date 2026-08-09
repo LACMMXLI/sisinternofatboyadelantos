@@ -10,6 +10,25 @@
       content="Libreta de Nóminas: registro digital de adelantos, consumos y descuentos de empleados."
     />
     <title>Libreta de Nóminas</title>
+    <script>
+      // Aplica el tema guardado (o la preferencia del sistema) antes del primer
+      // paint para evitar parpadeo claro→oscuro. Debe leer la misma llave que
+      // ThemeProvider (apps/web/src/app/providers/ThemeProvider.tsx).
+      (function () {
+        try {
+          var stored = localStorage.getItem('libreta-theme');
+          var theme =
+            stored === 'light' || stored === 'dark'
+              ? stored
+              : window.matchMedia('(prefers-color-scheme: dark)').matches
+                ? 'dark'
+                : 'light';
+          document.documentElement.dataset.theme = theme;
+        } catch (e) {
+          /* localStorage inaccesible (modo privado estricto): se queda en claro. */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

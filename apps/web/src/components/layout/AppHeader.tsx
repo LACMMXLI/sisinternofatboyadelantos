@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { Bell, LogOut, Menu, Search } from 'lucide-react';
+import { Bell, LogOut, Menu, Moon, Search, Sun } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROLE_LABELS } from '@libreta/shared';
 import { useAuth } from '@/app/providers/AuthProvider';
+import { useTheme } from '@/app/providers/ThemeProvider';
 import { initialsFrom } from '@/lib/utils/avatar';
 
 interface AppHeaderProps {
@@ -17,6 +18,7 @@ interface AppHeaderProps {
  */
 export function AppHeader({ onOpenMenu, searchPlaceholder = 'Buscar empleado…' }: AppHeaderProps) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -76,7 +78,17 @@ export function AppHeader({ onOpenMenu, searchPlaceholder = 'Buscar empleado…'
 
         <button
           type="button"
-          className="relative ml-auto grid h-9 w-9 shrink-0 place-items-center rounded-control hover:bg-white/10 md:ml-0"
+          onClick={toggleTheme}
+          className="ml-auto grid h-9 w-9 shrink-0 place-items-center rounded-control hover:bg-white/10 md:ml-0"
+          aria-label={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+          title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+        >
+          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+
+        <button
+          type="button"
+          className="relative grid h-9 w-9 shrink-0 place-items-center rounded-control hover:bg-white/10"
           aria-label="Notificaciones"
         >
           <Bell size={18} />

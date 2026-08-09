@@ -37,3 +37,43 @@
   --shadow-control: 0 1px 2px rgba(16, 32, 63, 0.06), 0 1px 1px rgba(16, 32, 63, 0.04);
   --shadow-panel: 0 12px 32px rgba(16, 32, 63, 0.1), 0 2px 8px rgba(16, 32, 63, 0.06);
 }
+
+/**
+ * Modo oscuro (toggle manual desde AppHeader, ver ThemeProvider). Mismo
+ * vocabulario de tokens que el claro — ningún componente referencia colores
+ * fuera de estas variables, así que basta con redefinirlas aquí.
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* --canvas/--surface/--surface-soft escalonados con separación deliberada
+     (no solo un pelín más claros) para que las tarjetas y contenedores se
+     distingan del fondo sin depender de la sombra, que en oscuro casi no se
+     ve. --muted y --line se subieron de brillo para que el texto secundario
+     y los bordes no se "pierdan" contra fondos oscuros. */
+  --canvas: #090e1a;
+  --surface: #151f36;
+  --surface-soft: #1d2a47;
+  --ink: #f5f7fc;
+  --muted: #aab6d6;
+  --line: #33436e;
+
+  --brand-800: #2560d6;
+  --brand-700: #3170e8;
+  --brand-600: #4a8bff;
+  --brand-500: #67a2ff;
+
+  --success: #3ddb8a;
+  --success-soft: rgba(61, 219, 138, 0.22);
+  --danger: #ff6b7f;
+  --danger-soft: rgba(255, 107, 127, 0.22);
+  --warning: #ffb457;
+  --warning-soft: rgba(255, 180, 87, 0.22);
+  --purple: #b98bff;
+  --purple-soft: rgba(185, 139, 255, 0.22);
+  --pink: #ff7fbb;
+  --pink-soft: rgba(255, 127, 187, 0.22);
+
+  --shadow-control: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 1px rgba(0, 0, 0, 0.25);
+  --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
+}
