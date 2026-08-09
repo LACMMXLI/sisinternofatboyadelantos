@@ -3,11 +3,13 @@
  * en producción — solo vía `pnpm --filter api run seed`.
  *
  * Crea: negocio demo "Fatboy", 3 sucursales (Venecia, San Marcos,
- * Américas), un usuario por rol con contraseña temporal. Los empleados,
- * categorías y movimientos de ejemplo se agregan en las fases 3 y 4.
+ * Américas), un usuario por rol con contraseña temporal, el catálogo de
+ * categorías "system" (§SYSTEM_MOVEMENT_CATEGORIES en @libreta/shared). Los
+ * empleados y movimientos de ejemplo se agregan en la Fase 4.
  */
 import { PrismaClient, type Role } from '@prisma/client';
 import * as argon2 from 'argon2';
+import { SYSTEM_MOVEMENT_CATEGORIES } from '@libreta/shared';
 
 const prisma = new PrismaClient();
 
@@ -96,6 +98,23 @@ async function main() {
         create: { userId: user.id, branchId: branch.id },
       });
     }
+  }
+
+  for (const [index, category] of SYSTEM_MOVEMENT_CATEGORIES.entries()) {
+    await prisma.movementCategory.upsert({
+      where: { organizationId_code: { organizationId: org.id, code: category.code } },
+      update: {},
+      create: {
+        organizationId: org.id,
+        code: category.code,
+        label: category.label,
+        direction: category.direction,
+        iconName: category.iconName,
+        colorToken: category.colorToken,
+        sortOrder: index,
+        system: true,
+      },
+    });
   }
 
   console.log('Seed de desarrollo aplicado.');

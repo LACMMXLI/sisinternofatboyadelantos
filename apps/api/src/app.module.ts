@@ -13,6 +13,8 @@ import { AuthModule } from './auth/auth.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { BranchesModule } from './branches/branches.module';
 import { UsersModule } from './users/users.module';
+import { EmployeesModule } from './employees/employees.module';
+import { MovementCategoriesModule } from './movement-categories/movement-categories.module';
 
 @Module({
   imports: [
@@ -31,6 +33,8 @@ import { UsersModule } from './users/users.module';
     OrganizationsModule,
     BranchesModule,
     UsersModule,
+    EmployeesModule,
+    MovementCategoriesModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

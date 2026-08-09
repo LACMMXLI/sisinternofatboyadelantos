@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/client';
-import type { Role } from '@libreta/shared';
+import type { MovementDirection, Role } from '@libreta/shared';
 
 // ---------------------------------------------------------------------------
 // Negocio
@@ -145,5 +145,79 @@ export function useLogoutAllUserSessions() {
   return useMutation({
     mutationFn: (id: string) =>
       apiFetch<{ success: boolean }>(`/users/${id}/logout-all`, { method: 'POST' }),
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Categorías de movimiento
+// ---------------------------------------------------------------------------
+
+export interface MovementCategoryView {
+  id: string;
+  code: string;
+  label: string;
+  direction: MovementDirection;
+  iconName: string;
+  colorToken: string;
+  sortOrder: number;
+  requiresNote: boolean;
+  requiresEvidence: boolean;
+  requiresApproval: boolean;
+  approvalThresholdCents: number | null;
+  dailyLimitCents: number | null;
+  weeklyLimitCents: number | null;
+  maxPerMovementCents: number | null;
+  system: boolean;
+  active: boolean;
+}
+
+export interface CreateMovementCategoryInput {
+  code: string;
+  label: string;
+  direction: MovementDirection;
+  iconName: string;
+  colorToken: string;
+  sortOrder?: number;
+  requiresNote?: boolean;
+  requiresEvidence?: boolean;
+  requiresApproval?: boolean;
+  approvalThresholdCents?: number;
+  dailyLimitCents?: number;
+  weeklyLimitCents?: number;
+  maxPerMovementCents?: number;
+}
+
+export function useMovementCategories(includeInactive = false) {
+  return useQuery({
+    queryKey: ['movement-categories', { includeInactive }],
+    queryFn: () =>
+      apiFetch<MovementCategoryView[]>(
+        `/movement-categories${includeInactive ? '?includeInactive=true' : ''}`,
+      ),
+  });
+}
+
+export function useCreateMovementCategory() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: CreateMovementCategoryInput) =>
+      apiFetch<MovementCategoryView>('/movement-categories', { method: 'POST', body }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['movement-categories'] });
+    },
+  });
+}
+
+export function useSetMovementCategoryActive() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) =>
+      apiFetch<MovementCategoryView>(
+        `/movement-categories/${id}/${active ? 'reactivate' : 'deactivate'}`,
+        { method: 'POST' },
+      ),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['movement-categories'] });
+    },
   });
 }
