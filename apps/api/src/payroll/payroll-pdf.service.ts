@@ -50,6 +50,8 @@ interface BatchForPdf {
     plannedAmountCents: number;
     appliedAmountCents: number;
     balanceAfterCents: number | null;
+    baseSalaryCents: number | null;
+    netPayCents: number | null;
     ledgerMovementId: string | null;
     employee: {
       displayName: string;
@@ -62,13 +64,19 @@ interface BatchForPdf {
 
 /**
  * Exportación PDF de un lote de nómina (§Fase 5, a petición explícita del
- * usuario). Muestra únicamente lo que el sistema realmente controla: datos
- * de la empresa, identidad del empleado, y el detalle de los cargos que se
- * le están descontando por categoría — nunca sueldo/bonos/ISR/IMSS, que
- * están fuera de alcance del proyecto (§1). El desglose por categoría sale
- * de `SettlementAllocation` cuando el lote ya se aplicó (asignación real);
- * si aún no se aplica, se marca como "vista previa" y sale del saldo
- * pendiente actual por categoría.
+ * usuario). Datos de la empresa, identidad del empleado, y el detalle de
+ * los cargos que se le están descontando por categoría. El desglose por
+ * categoría sale de `SettlementAllocation` cuando el lote ya se aplicó
+ * (asignación real); si aún no se aplica, se marca como "vista previa" y
+ * sale del saldo pendiente actual por categoría.
+ *
+ * Sueldo y neto a pagar (corrección 2026-08-09, decisión del usuario): el
+ * negocio adelanta el sueldo semanal en efectivo día a día (§Employee.
+ * baseSalaryCents) y necesita, al corte de cada empleado, saber cuánto le
+ * queda por entregar — por eso el PDF sí muestra "Sueldo" y "Neto a pagar"
+ * cuando el empleado tiene sueldo capturado. Sigue sin calcular ISR, IMSS
+ * ni timbrado (fuera de alcance, §1): el neto es una resta simple
+ * (sueldo − descuentos), no un cálculo fiscal, y así se rotula en el pie.
  */
 @Injectable()
 export class PayrollPdfService {
@@ -171,13 +179,23 @@ export class PayrollPdfService {
     doc.font('Helvetica-Bold').fontSize(11).text('Resumen del lote');
     doc.moveDown(0.3);
 
-    const columns = [
-      { label: 'Empleado', width: 160 },
-      { label: 'Puesto', width: 100 },
-      { label: 'Saldo al preparar', width: 85 },
-      { label: 'Planeado', width: 75 },
-      { label: 'Aplicado', width: 75 },
-    ];
+    const hasAnySalary = batch.items.some((i) => i.baseSalaryCents != null);
+    const columns = hasAnySalary
+      ? [
+          { label: 'Empleado', width: 125 },
+          { label: 'Puesto', width: 70 },
+          { label: 'Sueldo', width: 65 },
+          { label: 'Descuentos', width: 65 },
+          { label: 'Neto a pagar', width: 65 },
+          { label: 'Aplicado', width: 65 },
+        ]
+      : [
+          { label: 'Empleado', width: 160 },
+          { label: 'Puesto', width: 100 },
+          { label: 'Saldo al preparar', width: 85 },
+          { label: 'Planeado', width: 75 },
+          { label: 'Aplicado', width: 75 },
+        ];
     const startX = PAGE_MARGIN;
     let y = doc.y + 4;
 
@@ -198,15 +216,33 @@ export class PayrollPdfService {
         y = PAGE_MARGIN;
       }
       x = startX;
-      const cells = [
-        `${item.employee.displayName} (${item.employee.employeeNumber})`,
-        item.employee.jobTitle ?? '—',
-        money(item.balanceAtPrepCents),
-        money(item.plannedAmountCents),
-        item.appliedAmountCents > 0 ? money(item.appliedAmountCents) : '—',
-      ];
+      const cells = hasAnySalary
+        ? [
+            `${item.employee.displayName} (${item.employee.employeeNumber})`,
+            item.employee.jobTitle ?? '—',
+            item.baseSalaryCents != null ? money(item.baseSalaryCents) : '—',
+            money(item.plannedAmountCents),
+            item.netPayCents != null ? money(item.netPayCents) : '—',
+            item.appliedAmountCents > 0 ? money(item.appliedAmountCents) : '—',
+          ]
+        : [
+            `${item.employee.displayName} (${item.employee.employeeNumber})`,
+            item.employee.jobTitle ?? '—',
+            money(item.balanceAtPrepCents),
+            money(item.plannedAmountCents),
+            item.appliedAmountCents > 0 ? money(item.appliedAmountCents) : '—',
+          ];
       for (let i = 0; i < cells.length; i++) {
+        if (
+          item.netPayCents != null &&
+          i === 4 &&
+          hasAnySalary &&
+          item.netPayCents < 0
+        ) {
+          doc.fillColor('#ef334a');
+        }
         doc.text(cells[i], x, y, { width: columns[i].width });
+        doc.fillColor('#10203f');
         x += columns[i].width;
       }
       y += 16;
@@ -217,13 +253,26 @@ export class PayrollPdfService {
     y += 6;
     doc.font('Helvetica-Bold');
     x = startX;
-    const totals = [
-      'Total',
-      '',
-      money(batch.items.reduce((s, i) => s + i.balanceAtPrepCents, 0)),
-      money(batch.totalPlannedCents),
-      money(batch.totalAppliedCents),
-    ];
+    const totalNetCents = batch.items.reduce(
+      (s, i) => s + (i.netPayCents ?? 0),
+      0,
+    );
+    const totals = hasAnySalary
+      ? [
+          'Total',
+          '',
+          money(batch.items.reduce((s, i) => s + (i.baseSalaryCents ?? 0), 0)),
+          money(batch.totalPlannedCents),
+          money(totalNetCents),
+          money(batch.totalAppliedCents),
+        ]
+      : [
+          'Total',
+          '',
+          money(batch.items.reduce((s, i) => s + i.balanceAtPrepCents, 0)),
+          money(batch.totalPlannedCents),
+          money(batch.totalAppliedCents),
+        ];
     for (let i = 0; i < totals.length; i++) {
       doc.text(totals[i], x, y, { width: columns[i].width });
       x += columns[i].width;
@@ -263,7 +312,22 @@ export class PayrollPdfService {
             ? `Aplicado: ${money(item.appliedAmountCents)} — saldo restante ${money(item.balanceAfterCents ?? 0)}`
             : `Vista previa (aún no aplicado) — planeado: ${money(item.plannedAmountCents)}`,
         );
-      doc.fillColor('#10203f').moveDown(0.3);
+      doc.fillColor('#10203f').moveDown(0.2);
+
+      if (item.baseSalaryCents != null) {
+        doc
+          .font('Helvetica-Bold')
+          .fontSize(8)
+          .fillColor(
+            item.netPayCents != null && item.netPayCents < 0
+              ? '#ef334a'
+              : '#10203f',
+          )
+          .text(
+            `Sueldo: ${money(item.baseSalaryCents)} — Descuentos: ${money(item.plannedAmountCents)} — Neto a pagar: ${money(item.netPayCents ?? 0)}`,
+          );
+        doc.fillColor('#10203f').moveDown(0.3);
+      }
 
       const breakdown = breakdowns.get(item.id) ?? [];
       if (breakdown.length === 0) {
@@ -304,7 +368,7 @@ export class PayrollPdfService {
   ) {
     const range = doc.bufferedPageRange();
     const text = (page: number) =>
-      `Generado el ${DATETIME_FORMAT.format(new Date())} (${organization.timezone}) — no calcula sueldo, ISR ni IMSS. Página ${page} de ${range.count}.`;
+      `Generado el ${DATETIME_FORMAT.format(new Date())} (${organization.timezone}) — el neto a pagar es sueldo menos descuentos; no calcula ISR, IMSS ni timbrado. Página ${page} de ${range.count}.`;
 
     for (let i = 0; i < range.count; i++) {
       doc.switchToPage(range.start + i);

@@ -1,18 +1,26 @@
-import { Info, TrendingUp } from 'lucide-react';
-import { describeBalance } from '@/lib/utils/money';
+import { AlertTriangle, Info, TrendingUp } from 'lucide-react';
+import { describeBalance, formatCentsToMXN } from '@/lib/utils/money';
 import { CategoryBreakdown } from './CategoryBreakdown';
 
 interface BalanceCardProps {
   balanceCents: number;
   breakdown: { label: string; amountCents: number; colorVar: string; percent?: number }[];
+  /** Sueldo por periodo de nómina del empleado (centavos), si está capturado. */
+  baseSalaryCents?: number | null;
 }
 
 /**
  * Panel de saldo (§4.5, referencia visual 1): saldo grande, barra de
  * progreso, desglose por categoría, aviso de que se descuenta en nómina.
  * Sigue exactamente la regla de presentación del saldo (§6.1).
+ *
+ * Sueldo/neto estimado (corrección 2026-08-09): cuando el empleado tiene
+ * `baseSalaryCents`, se muestra "sueldo − saldo pendiente = neto estimado"
+ * — una resta simple, rotulada como estimado, nunca como cálculo fiscal
+ * (ISR/IMSS siguen fuera de alcance). Si el saldo ya supera el sueldo, se
+ * marca en rojo como advertencia visible, sin bloquear nada desde aquí.
  */
-export function BalanceCard({ balanceCents, breakdown }: BalanceCardProps) {
+export function BalanceCard({ balanceCents, breakdown, baseSalaryCents }: BalanceCardProps) {
   const balance = describeBalance(balanceCents);
   const maxCents = Math.max(...breakdown.map((b) => b.amountCents), 1);
   const progressPercent = Math.min(100, (Math.abs(balanceCents) / (maxCents * 1.6)) * 100);
@@ -53,6 +61,35 @@ export function BalanceCard({ balanceCents, breakdown }: BalanceCardProps) {
           <Info size={15} className="mt-0.5 shrink-0" />
           Este saldo se descontará en la próxima nómina.
         </div>
+      ) : null}
+
+      {baseSalaryCents != null ? (
+        <>
+          <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-sm">
+            <span className="text-muted">Sueldo del periodo</span>
+            <span className="font-semibold tabular-nums text-ink">{formatCentsToMXN(baseSalaryCents)}</span>
+          </div>
+          <div className="mt-1 flex items-center justify-between text-sm">
+            <span className="text-muted">Neto estimado</span>
+            <span
+              className={
+                baseSalaryCents - balanceCents < 0
+                  ? 'font-bold tabular-nums text-danger'
+                  : 'font-bold tabular-nums text-success'
+              }
+            >
+              {formatCentsToMXN(baseSalaryCents - balanceCents)}
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] text-muted">Estimado (sueldo − saldo pendiente): no calcula ISR ni IMSS.</p>
+
+          {balanceCents > baseSalaryCents ? (
+            <div className="mt-2 flex items-start gap-2 rounded-control bg-danger-soft px-3 py-2 text-xs text-danger">
+              <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+              Los adelantos/consumos ya superan el sueldo del periodo.
+            </div>
+          ) : null}
+        </>
       ) : null}
     </div>
   );

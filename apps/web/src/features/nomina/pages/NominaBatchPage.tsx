@@ -29,7 +29,13 @@ const DATE_FORMAT = new Intl.DateTimeFormat('es-MX', { day: '2-digit', month: 's
 /**
  * Detalle de lote de nómina (Fase 5): renglones por empleado con monto
  * planeado editable (mientras el lote sea editable) y los botones de
- * transición de estado (§Fase 5). No calcula sueldo/ISR/IMSS.
+ * transición de estado (§Fase 5). No calcula ISR/IMSS/timbrado.
+ *
+ * Sueldo y neto a pagar (corrección 2026-08-09): cuando el empleado tiene
+ * `baseSalaryCents` capturado, se agregan columnas "Sueldo" y "Neto a
+ * pagar" = sueldo − planeado — es la resta que el usuario hace a mano al
+ * corte de cada empleado para saber cuánto entregarle. Si nadie en el lote
+ * tiene sueldo capturado, las columnas no aparecen (no aporta nada vacío).
  */
 export function NominaBatchPage() {
   const { batchId } = useParams<{ batchId: string }>();
@@ -61,6 +67,9 @@ export function NominaBatchPage() {
   }
 
   const editable = batch.status === 'DRAFT' || batch.status === 'REOPENED';
+  const hasAnySalary = batch.items.some((i) => i.baseSalaryCents != null);
+  const totalSalaryCents = batch.items.reduce((s, i) => s + (i.baseSalaryCents ?? 0), 0);
+  const totalNetCents = batch.items.reduce((s, i) => s + (i.netPayCents ?? 0), 0);
 
   const runAction = async (fn: () => Promise<unknown>) => {
     setError(null);
@@ -125,8 +134,10 @@ export function NominaBatchPage() {
           <thead>
             <tr className="border-b border-line text-left text-xs font-semibold tracking-wide text-muted uppercase">
               <th className="px-4 py-2.5">Empleado</th>
-              <th className="px-4 py-2.5 text-right">Saldo al preparar</th>
+              {hasAnySalary ? <th className="px-4 py-2.5 text-right">Sueldo</th> : null}
+              <th className="px-4 py-2.5 text-right">{hasAnySalary ? 'Descuentos' : 'Saldo al preparar'}</th>
               <th className="px-4 py-2.5 text-right">Planeado</th>
+              {hasAnySalary ? <th className="px-4 py-2.5 text-right">Neto a pagar</th> : null}
               <th className="px-4 py-2.5 text-right">Aplicado</th>
             </tr>
           </thead>
@@ -137,6 +148,11 @@ export function NominaBatchPage() {
                   {item.employee.displayName}{' '}
                   <span className="font-mono text-xs text-muted">{item.employee.employeeNumber}</span>
                 </td>
+                {hasAnySalary ? (
+                  <td className="px-4 py-2.5 text-right tabular-nums text-muted">
+                    {item.baseSalaryCents != null ? formatCentsToMXN(item.baseSalaryCents) : '—'}
+                  </td>
+                ) : null}
                 <td className="px-4 py-2.5 text-right tabular-nums text-muted">
                   {formatCentsToMXN(item.balanceAtPrepCents)}
                 </td>
@@ -154,6 +170,16 @@ export function NominaBatchPage() {
                     <span className="tabular-nums text-ink">{formatCentsToMXN(item.plannedAmountCents)}</span>
                   )}
                 </td>
+                {hasAnySalary ? (
+                  <td
+                    className={cn(
+                      'px-4 py-2.5 text-right font-semibold tabular-nums',
+                      item.netPayCents != null && item.netPayCents < 0 ? 'text-danger' : 'text-ink',
+                    )}
+                  >
+                    {item.netPayCents != null ? formatCentsToMXN(item.netPayCents) : '—'}
+                  </td>
+                ) : null}
                 <td className="px-4 py-2.5 text-right tabular-nums text-success">
                   {item.appliedAmountCents > 0 ? formatCentsToMXN(item.appliedAmountCents) : '—'}
                 </td>
@@ -163,10 +189,23 @@ export function NominaBatchPage() {
           <tfoot>
             <tr className="border-t border-line font-semibold text-ink">
               <td className="px-4 py-2.5">Total</td>
+              {hasAnySalary ? (
+                <td className="px-4 py-2.5 text-right tabular-nums">{formatCentsToMXN(totalSalaryCents)}</td>
+              ) : null}
               <td className="px-4 py-2.5 text-right tabular-nums">
                 {formatCentsToMXN(batch.items.reduce((s, i) => s + i.balanceAtPrepCents, 0))}
               </td>
               <td className="px-4 py-2.5 text-right tabular-nums">{formatCentsToMXN(batch.totalPlannedCents)}</td>
+              {hasAnySalary ? (
+                <td
+                  className={cn(
+                    'px-4 py-2.5 text-right tabular-nums',
+                    totalNetCents < 0 && 'text-danger',
+                  )}
+                >
+                  {formatCentsToMXN(totalNetCents)}
+                </td>
+              ) : null}
               <td className="px-4 py-2.5 text-right tabular-nums">{formatCentsToMXN(batch.totalAppliedCents)}</td>
             </tr>
           </tfoot>

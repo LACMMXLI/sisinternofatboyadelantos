@@ -154,6 +154,13 @@ model Employee {
   active          Boolean   @default(true)
   primaryBranchId String
   userId          String?   @unique
+  /// Sueldo bruto por periodo de nómina (semanal/quincenal, según la
+  /// frecuencia configurada en `PayrollPeriod`). Opcional: el negocio puede
+  /// operar solo con la libreta de adeudos sin capturarlo. Sirve para
+  /// estimar "sueldo neto = sueldo - saldo pendiente" y advertir cuando los
+  /// adelantos/consumos ya superan el sueldo — nunca para calcular ISR,
+  /// IMSS ni timbrado, que siguen fuera de alcance (§1 del prompt maestro).
+  baseSalaryCents Int?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -438,6 +445,14 @@ model PayrollBatchItem {
   plannedAmountCents Int
   appliedAmountCents Int      @default(0)
   balanceAfterCents  Int?
+  /// Snapshot de `Employee.baseSalaryCents` al preparar el lote (o al editar
+  /// el monto planeado): si el sueldo del empleado cambia después, los
+  /// lotes ya preparados no se mueven — igual que `balanceAtPrepCents`.
+  baseSalaryCents    Int?
+  /// `baseSalaryCents - plannedAmountCents`. Puede salir negativo si los
+  /// adelantos/consumos ya superan el sueldo del periodo; se muestra tal
+  /// cual (en rojo) en vez de recortarlo, para que quede visible.
+  netPayCents        Int?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

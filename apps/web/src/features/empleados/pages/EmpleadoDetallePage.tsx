@@ -25,6 +25,7 @@ export function EmpleadoDetallePage() {
   const setActive = useSetEmployeeActive();
 
   const [jobTitle, setJobTitle] = useState('');
+  const [baseSalary, setBaseSalary] = useState('');
   const [primaryBranchId, setPrimaryBranchId] = useState('');
   const [additionalBranchIds, setAdditionalBranchIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export function EmpleadoDetallePage() {
   useEffect(() => {
     if (!employee) return;
     setJobTitle(employee.jobTitle ?? '');
+    setBaseSalary(employee.baseSalaryCents != null ? (employee.baseSalaryCents / 100).toString() : '');
     setPrimaryBranchId(employee.primaryBranchId);
     setAdditionalBranchIds(employee.additionalBranches.map((b) => b.branch.id));
   }, [employee]);
@@ -61,9 +63,11 @@ export function EmpleadoDetallePage() {
     setError(null);
     setSaved(false);
     try {
+      const salaryCents = baseSalary.trim() ? Math.round(Number.parseFloat(baseSalary) * 100) : undefined;
       await updateEmployee.mutateAsync({
         id: employee.id,
         jobTitle: jobTitle || undefined,
+        baseSalaryCents: salaryCents != null && Number.isFinite(salaryCents) ? salaryCents : undefined,
         primaryBranchId,
         additionalBranchIds,
       });
@@ -120,6 +124,26 @@ export function EmpleadoDetallePage() {
               onChange={(e) => setJobTitle(e.target.value)}
               className="h-11 w-full rounded-control border border-line bg-surface-soft px-3.5 text-sm outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/30"
             />
+          </div>
+
+          <div>
+            <label htmlFor="baseSalary" className="mb-1.5 block text-sm font-medium text-ink">
+              Sueldo por periodo de nómina
+            </label>
+            <div className="relative">
+              <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-sm font-semibold text-muted">
+                $
+              </span>
+              <input
+                id="baseSalary"
+                type="text"
+                inputMode="decimal"
+                value={baseSalary}
+                onChange={(e) => setBaseSalary(e.target.value.replace(/[^0-9.]/g, ''))}
+                placeholder="0.00"
+                className="h-11 w-full rounded-control border border-line bg-surface-soft pl-7 pr-3.5 text-sm outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/30"
+              />
+            </div>
           </div>
 
           <div>

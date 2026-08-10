@@ -8,14 +8,22 @@ interface MobileCaptureSheetProps {
   categories: MovementCategoryView[];
   resolveBranchId: (employeeId: string) => string | undefined;
   onClose: () => void;
+  initialEmployeeId?: string | null;
 }
 
 /**
  * Captura rápida en móvil (§7 responsive): bottom sheet con el mismo
  * `MovementCaptureForm` y el mismo orden obligatorio que en escritorio —
- * solo cambia el envoltorio visual, no la lógica.
+ * solo cambia el envoltorio visual, no la lógica. `initialEmployeeId`
+ * precarga el empleado ya seleccionado en la libreta (§pantalla principal).
  */
-export function MobileCaptureSheet({ employees, categories, resolveBranchId, onClose }: MobileCaptureSheetProps) {
+export function MobileCaptureSheet({
+  employees,
+  categories,
+  resolveBranchId,
+  onClose,
+  initialEmployeeId,
+}: MobileCaptureSheetProps) {
   return (
     <div className="fixed inset-0 z-40 flex items-end bg-ink/40" role="dialog" aria-modal="true">
       <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-card border border-line bg-surface p-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-panel">
@@ -30,7 +38,12 @@ export function MobileCaptureSheet({ employees, categories, resolveBranchId, onC
             <X size={18} />
           </button>
         </div>
-        <MovementCaptureForm employees={employees} categories={categories} resolveBranchId={resolveBranchId} />
+        <MovementCaptureForm
+          employees={employees}
+          categories={categories}
+          resolveBranchId={resolveBranchId}
+          initialEmployeeId={initialEmployeeId}
+        />
       </div>
     </div>
   );

@@ -4,10 +4,12 @@ import {
   ArrayUnique,
   IsArray,
   IsDate,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Length,
+  Min,
 } from 'class-validator';
 
 export class CreateEmployeeDto {
@@ -46,6 +48,16 @@ export class CreateEmployeeDto {
   @Type(() => Date)
   @IsDate()
   hireDate?: Date;
+
+  @ApiPropertyOptional({
+    description:
+      'Sueldo bruto por periodo de nómina (según la frecuencia semanal/quincenal del negocio), en centavos. Opcional: no calcula ISR/IMSS, solo sirve para estimar el neto y advertir sobregiros de adelantos.',
+    example: 250000,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  baseSalaryCents?: number;
 
   @ApiProperty({ description: 'Sucursal principal del empleado.' })
   @IsUUID()

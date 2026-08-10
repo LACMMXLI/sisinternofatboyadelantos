@@ -1,77 +1,59 @@
-import { useMemo, useState } from 'react';
-import { NotebookPen } from 'lucide-react';
-import { DayHeader } from '@/components/notebook/DayHeader';
-import { DailySheet } from '@/components/notebook/DailySheet';
-import { QuickCaptureBar } from '@/components/movement/QuickCaptureBar';
+import { useEffect, useMemo, useState } from 'react';
+import { Search } from 'lucide-react';
+import { EmployeeList, type EmployeeListEntry } from '@/components/employees/EmployeeList';
+import { EmployeeWorkspacePanel } from '@/components/employees/EmployeeWorkspacePanel';
+import { NotebookSpine } from '@/components/notebook/NotebookSpine';
 import { MobileCaptureSheet } from '@/components/movement/MobileCaptureSheet';
-import { EmployeeDetailDrawer } from '@/components/employees/EmployeeDetailDrawer';
-import { RecentEmployeesStrip } from '@/components/employees/RecentEmployeesStrip';
 import { useEmployees } from '@/features/empleados/api';
 import { useMovementCategories, useBranches } from '@/features/configuracion/api';
-import { useDailyMovements } from '@/features/libreta/api';
-import { businessDayRangeUtc, formatFullSpanishDate, todayBusinessDateKey, addDaysToDateKey } from '@/lib/utils/date';
+import { useEmployeeBalances } from '@/features/libreta/api';
 
 /**
- * Pantalla insignia — "Libreta del día" (corrección 2026-08-09, ver
- * `IMPLEMENTATION_PLAN.md`). Cambio de modelo mental: de "seleccionar
- * empleado → consultar saldo" a "abrir la libreta de hoy → ver todo lo
- * anotado → escribir la siguiente anotación → consultar un empleado solo
- * cuando haga falta". El empleado es un dato de cada anotación, no el dueño
- * de la pantalla.
+ * Pantalla insignia — "Libreta" (corrección 2026-08-09 #2, decisión del
+ * usuario). Vuelve al modelo mental de dos hojas: la izquierda, angosta,
+ * lista TODOS los empleados; la derecha, grande, abre en el empleado
+ * elegido con su saldo, desglose e historial completo. Entre ambas,
+ * `NotebookSpine` dibuja el "resorte" de argollas que simula el doblez
+ * físico de una libreta abierta. Reemplaza el intento de "libreta del día"
+ * (ver commit c6a3de8): ese modelo centraba la pantalla en el día, no en
+ * el empleado, y dificultaba responder "¿cuánto lleva Fulano?" de un
+ * vistazo — que es la pregunta que esta pantalla existe para responder.
  */
 export function LibretaPage() {
-  const [dateKey, setDateKey] = useState(todayBusinessDateKey());
   const [branchId, setBranchId] = useState<string | undefined>(undefined);
-  const [sortAsc, setSortAsc] = useState(false);
-  const [drawerEmployeeId, setDrawerEmployeeId] = useState<string | null>(null);
-  const [mobileCaptureOpen, setMobileCaptureOpen] = useState(false);
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
+  const [captureOpen, setCaptureOpen] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(searchInput.trim()), 250);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const { data: branches } = useBranches();
   const activeBranchId = branchId ?? branches?.[0]?.id;
-  const { data: employees } = useEmployees({ active: true, branchId: activeBranchId });
+  const { data: employees } = useEmployees({
+    active: true,
+    branchId: activeBranchId,
+    search: search || undefined,
+  });
   const { data: categories } = useMovementCategories(false);
 
-  const { from, to } = useMemo(() => businessDayRangeUtc(dateKey), [dateKey]);
-  const { data: movements, isLoading } = useDailyMovements({
-    fromIso: from.toISOString(),
-    toIso: to.toISOString(),
-    branchId: activeBranchId,
-  });
+  const employeeIds = useMemo(() => (employees ?? []).map((e) => e.id), [employees]);
+  const balances = useEmployeeBalances(employeeIds);
 
-  const isToday = dateKey === todayBusinessDateKey();
-  const dateLabel = formatFullSpanishDate(dateKey);
-
-  const sortedMovements = useMemo(() => {
-    const list = [...(movements ?? [])];
-    list.sort((a, b) => {
-      const diff = new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime();
-      return sortAsc ? diff : -diff;
-    });
-    return list;
-  }, [movements, sortAsc]);
-
-  const stats = useMemo(() => {
-    const list = movements ?? [];
-    let chargeCents = 0;
-    let creditCents = 0;
-    let pendingCount = 0;
-    for (const m of list) {
-      if (m.status === 'PENDING_APPROVAL') pendingCount += 1;
-      if (m.status !== 'POSTED') continue;
-      if (m.direction === 'CHARGE') chargeCents += m.amountCents;
-      else creditCents += m.amountCents;
-    }
-    return { count: list.length, chargeCents, creditCents, pendingCount };
-  }, [movements]);
-
-  const recentEmployees = useMemo(() => {
-    const seen = new Map<string, string>();
-    for (const m of sortedMovements) {
-      if (m.employee && !seen.has(m.employee.id)) seen.set(m.employee.id, m.employee.displayName);
-      if (seen.size >= 8) break;
-    }
-    return [...seen.entries()].map(([id, displayName]) => ({ id, displayName }));
-  }, [sortedMovements]);
+  const listEntries: EmployeeListEntry[] = useMemo(
+    () =>
+      (employees ?? []).map((e) => ({
+        id: e.id,
+        displayName: e.displayName,
+        jobTitle: e.jobTitle || 'Sin puesto',
+        balanceCents: balances.get(e.id) ?? 0,
+        active: e.active,
+      })),
+    [employees, balances],
+  );
 
   const employeeOptions = useMemo(
     () =>
@@ -89,67 +71,77 @@ export function LibretaPage() {
     return employee?.primaryBranchId ?? activeBranchId;
   };
 
+  // Abre la libreta con alguien ya elegido: evita una hoja derecha vacía
+  // en la primera carga y tras filtrar/buscar si la selección quedó fuera
+  // de la lista visible.
+  useEffect(() => {
+    if (listEntries.length === 0) return;
+    const stillVisible = listEntries.some((e) => e.id === selectedEmployeeId);
+    if (!selectedEmployeeId || !stillVisible) {
+      setSelectedEmployeeId(listEntries[0].id);
+    }
+  }, [listEntries, selectedEmployeeId]);
+
   return (
-    <div className="space-y-3.5 pb-24 md:pb-3.5">
-      <DayHeader
-        dateKey={dateKey}
-        dateLabel={dateLabel}
-        isToday={isToday}
-        onPrevDay={() => setDateKey((d) => addDaysToDateKey(d, -1))}
-        onNextDay={() => setDateKey((d) => addDaysToDateKey(d, 1))}
-        onToday={() => setDateKey(todayBusinessDateKey())}
-        onPickDate={setDateKey}
-        branches={branches ?? []}
-        branchId={activeBranchId}
-        onBranchChange={setBranchId}
-        stats={stats}
-      />
+    <div className="space-y-3.5 pb-6">
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
+        <div>
+          <h1 className="text-lg font-bold text-ink">Libreta</h1>
+          <p className="text-sm text-muted">Elige un empleado para ver su saldo e historial.</p>
+        </div>
+        {branches && branches.length > 1 ? (
+          <select
+            value={activeBranchId ?? ''}
+            onChange={(e) => setBranchId(e.target.value || undefined)}
+            className="h-10 rounded-control border border-line bg-surface px-3 text-sm outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/30"
+          >
+            {branches.map((b) => (
+              <option key={b.id} value={b.id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
+        ) : null}
+      </div>
 
-      {recentEmployees.length > 0 ? (
-        <RecentEmployeesStrip employees={recentEmployees} onSelect={setDrawerEmployeeId} />
-      ) : null}
+      <div className="flex flex-col gap-2.5 xl:flex-row xl:items-stretch xl:gap-0">
+        {/* Hoja izquierda: angosta, todos los empleados (§ referencia visual 1) */}
+        <div className="flex w-full flex-col gap-2.5 xl:w-[300px] xl:shrink-0">
+          <label className="relative">
+            <Search size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted" />
+            <input
+              type="search"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Buscar empleado…"
+              className="h-10 w-full rounded-control border border-line bg-surface pl-9 pr-3 text-sm outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/30"
+            />
+          </label>
+          <EmployeeList
+            employees={listEntries}
+            selectedId={selectedEmployeeId}
+            onSelect={setSelectedEmployeeId}
+            onNewMovement={() => setCaptureOpen(true)}
+          />
+        </div>
 
-      <div className="grid gap-3.5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <DailySheet
-          movements={isLoading ? [] : sortedMovements}
-          sortAsc={sortAsc}
-          onToggleSort={() => setSortAsc((v) => !v)}
-          onEmployeeClick={setDrawerEmployeeId}
-          netCents={stats.chargeCents - stats.creditCents}
-          hasEmployees={(employees?.length ?? 0) > 0}
-          onEmptyCta={() => setMobileCaptureOpen(true)}
-        />
+        {/* Resorte central: solo visible cuando ambas hojas conviven lado a lado */}
+        <NotebookSpine />
 
-        <div className="hidden xl:block">
-          <QuickCaptureBar employees={employeeOptions} categories={categories ?? []} resolveBranchId={resolveBranchId} />
+        {/* Hoja derecha: grande, detalle del empleado elegido */}
+        <div className="w-full xl:flex-1">
+          <EmployeeWorkspacePanel employeeId={selectedEmployeeId} onNewMovement={() => setCaptureOpen(true)} />
         </div>
       </div>
 
-      {/* Tablet: captura visible bajo la hoja, sin necesidad de sheet (§7). */}
-      <div className="hidden md:block xl:hidden">
-        <QuickCaptureBar employees={employeeOptions} categories={categories ?? []} resolveBranchId={resolveBranchId} />
-      </div>
-
-      {/* Móvil: botón fijo + bottom sheet (§7). */}
-      <button
-        type="button"
-        onClick={() => setMobileCaptureOpen(true)}
-        className="fixed right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-30 flex h-14 items-center gap-2 rounded-full bg-success px-5 text-sm font-bold text-white shadow-panel md:hidden"
-      >
-        <NotebookPen size={18} /> Anotar movimiento
-      </button>
-
-      {mobileCaptureOpen ? (
+      {captureOpen ? (
         <MobileCaptureSheet
           employees={employeeOptions}
           categories={categories ?? []}
           resolveBranchId={resolveBranchId}
-          onClose={() => setMobileCaptureOpen(false)}
+          initialEmployeeId={selectedEmployeeId}
+          onClose={() => setCaptureOpen(false)}
         />
-      ) : null}
-
-      {drawerEmployeeId ? (
-        <EmployeeDetailDrawer employeeId={drawerEmployeeId} onClose={() => setDrawerEmployeeId(null)} />
       ) : null}
     </div>
   );

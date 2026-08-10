@@ -22,6 +22,7 @@ const employeeSelect = {
   photoObjectKey: true,
   hireDate: true,
   active: true,
+  baseSalaryCents: true,
   primaryBranchId: true,
   createdAt: true,
   primaryBranch: { select: { id: true, name: true, code: true } },
@@ -123,6 +124,7 @@ export class EmployeesService {
           displayName,
           jobTitle: dto.jobTitle,
           hireDate: dto.hireDate,
+          baseSalaryCents: dto.baseSalaryCents,
           primaryBranchId: dto.primaryBranchId,
           additionalBranches: dto.additionalBranchIds?.length
             ? {
@@ -191,6 +193,7 @@ export class EmployeesService {
             displayName,
             jobTitle: dto.jobTitle,
             hireDate: dto.hireDate,
+            baseSalaryCents: dto.baseSalaryCents,
             primaryBranchId: dto.primaryBranchId,
             active: dto.active,
           },

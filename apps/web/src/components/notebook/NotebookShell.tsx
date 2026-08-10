@@ -18,7 +18,7 @@ interface NotebookShellProps {
  */
 export function NotebookShell({ employeeFirstName, periodLabel, movements, totalCents }: NotebookShellProps) {
   return (
-    <section className="relative rounded-card border border-line bg-surface p-4 shadow-control xl:min-h-[70vh]">
+    <section className="paper relative rounded-card border border-line bg-surface p-4 shadow-control xl:min-h-[70vh]">
       <NotebookRings />
 
       {/* Borde azul lateral (§4.1) */}

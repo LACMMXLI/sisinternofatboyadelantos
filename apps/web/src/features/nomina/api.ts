@@ -18,6 +18,8 @@ export interface PayrollBatchItemView {
   plannedAmountCents: number;
   appliedAmountCents: number;
   balanceAfterCents: number | null;
+  baseSalaryCents: number | null;
+  netPayCents: number | null;
   ledgerMovementId: string | null;
   employee: { id: string; displayName: string; employeeNumber: string };
 }

@@ -16,15 +16,17 @@ const EMPTY_FORM = {
   firstName: '',
   lastName: '',
   jobTitle: '',
+  baseSalary: '',
   primaryBranchId: '',
   additionalBranchIds: [] as string[],
 };
 
 /**
  * Administración de empleados (Fase 3): búsqueda tolerante, filtro por
- * sucursal/estado, alta y baja/reactivación lógica. Distinta de la lista de
- * la pantalla "Libreta" (§4.5), que sigue usando datos de ejemplo hasta que
- * exista el `LedgerModule` (saldo real) — ver IMPLEMENTATION_PLAN.md.
+ * sucursal/estado, alta y baja/reactivación lógica, y sueldo por periodo de
+ * nómina (corrección 2026-08-09, decisión del usuario: el negocio adelanta
+ * el sueldo semanal en efectivo y necesita saber cuánto le queda por pagar
+ * a cada empleado en su corte — ver `IMPLEMENTATION_PLAN.md`).
  */
 export function EmpleadosPage() {
   const { user } = useAuth();
@@ -56,11 +58,15 @@ export function EmpleadosPage() {
     e.preventDefault();
     setError(null);
     try {
+      const salaryCents = form.baseSalary.trim()
+        ? Math.round(Number.parseFloat(form.baseSalary) * 100)
+        : undefined;
       const body: EmployeeInput = {
         employeeNumber: form.employeeNumber,
         firstName: form.firstName,
         lastName: form.lastName,
         jobTitle: form.jobTitle || undefined,
+        baseSalaryCents: salaryCents != null && Number.isFinite(salaryCents) ? salaryCents : undefined,
         primaryBranchId: form.primaryBranchId,
         additionalBranchIds: form.additionalBranchIds,
       };
@@ -158,6 +164,32 @@ export function EmpleadosPage() {
                 className="h-11 w-full rounded-control border border-line bg-surface-soft px-3.5 text-sm outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/30"
               />
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="baseSalary" className="mb-1.5 block text-sm font-medium text-ink">
+              Sueldo por periodo de nómina (opcional)
+            </label>
+            <div className="relative">
+              <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-sm font-semibold text-muted">
+                $
+              </span>
+              <input
+                id="baseSalary"
+                type="text"
+                inputMode="decimal"
+                value={form.baseSalary}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, baseSalary: e.target.value.replace(/[^0-9.]/g, '') }))
+                }
+                placeholder="0.00"
+                className="h-11 w-full rounded-control border border-line bg-surface-soft pl-7 pr-3.5 text-sm outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/30"
+              />
+            </div>
+            <p className="mt-1 text-xs text-muted">
+              Sueldo semanal/quincenal (según la frecuencia de nómina del negocio). No calcula ISR ni IMSS — solo sirve
+              para estimar el neto a pagar y avisar si los adelantos ya lo superan.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

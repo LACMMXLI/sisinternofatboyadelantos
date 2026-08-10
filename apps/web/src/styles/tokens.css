@@ -77,3 +77,72 @@
   --shadow-control: 0 1px 2px rgba(0, 0, 0, 0.35), 0 1px 1px rgba(0, 0, 0, 0.25);
   --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.35);
 }
+
+/**
+ * "Papel" de la hoja de la libreta (`NotebookShell`): pedido explícito del
+ * usuario (2026-08-09) — la hoja debe verse siempre como una hoja de papel
+ * real (blanca, tinta negra/azul, montos en rojo, acentos en azul),
+ * incluso con el tema oscuro activo.
+ *
+ * Redeclara tanto los tokens base (--surface, --ink, etc., por si algún
+ * componente los lee directo) como las variables `--color-*` que Tailwind
+ * genera en @theme (`index.css`) y que consumen de verdad las utilidades
+ * `bg-surface`/`text-ink`/etc. Es necesario duplicarlas: `--color-ink` se
+ * declara una sola vez en la raíz como `var(--ink)`, y las custom
+ * properties heredan el VALOR YA RESUELTO del ancestro más cercano que las
+ * declara — no vuelven a evaluar `var(--ink)` en cada descendiente. Sin
+ * este segundo bloque, `.paper` cambiaría `--ink` pero `text-ink` seguiría
+ * mostrando el tono oscuro heredado de `:root[data-theme='dark']`.
+ */
+.paper {
+  color-scheme: light;
+
+  --canvas: #f3f7fd;
+  --surface: #fffef8;
+  --surface-soft: #f8faff;
+  --ink: #10203f;
+  --muted: #66738c;
+  --line: #dce5f3;
+
+  --brand-800: #07348f;
+  --brand-700: #0a46b6;
+  --brand-600: #0f67e8;
+  --brand-500: #1787ff;
+
+  --success: #0dbd5b;
+  --success-soft: #ddf8e8;
+  --danger: #ef334a;
+  --danger-soft: #ffe1e6;
+  --warning: #ff8a1f;
+  --warning-soft: #fff0d9;
+  --purple: #8a3ffc;
+  --purple-soft: #efe3ff;
+  --pink: #f43f8f;
+  --pink-soft: #ffe0ef;
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+
+  --color-brand-800: var(--brand-800);
+  --color-brand-700: var(--brand-700);
+  --color-brand-600: var(--brand-600);
+  --color-brand-500: var(--brand-500);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-purple: var(--purple);
+  --color-purple-soft: var(--purple-soft);
+  --color-pink: var(--pink);
+  --color-pink-soft: var(--pink-soft);
+
+  --shadow-control: 0 1px 2px rgba(16, 32, 63, 0.06), 0 1px 1px rgba(16, 32, 63, 0.04);
+  --shadow-panel: 0 12px 32px rgba(16, 32, 63, 0.1), 0 2px 8px rgba(16, 32, 63, 0.06);
+}

@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api/client';
 import type { MovementDirection, MovementStatus } from '@libreta/shared';
 
@@ -53,6 +54,32 @@ export function useLedgerSummary(employeeId: string | undefined) {
     queryFn: () => apiFetch<LedgerSummary>(`/employees/${employeeId}/ledger/summary`),
     enabled: Boolean(employeeId),
   });
+}
+
+/**
+ * Saldo de cada empleado para la columna izquierda de la libreta (§pantalla
+ * principal, corrección 2026-08-09 #2). No existe un endpoint de saldos en
+ * lote, así que se dispara un `ledger/summary` por empleado con la misma
+ * queryKey que `useLedgerSummary` — reutiliza caché y se invalida junto con
+ * el resto de la familia `ledger-summary` al registrar un movimiento.
+ */
+export function useEmployeeBalances(employeeIds: string[]) {
+  const results = useQueries({
+    queries: employeeIds.map((id) => ({
+      queryKey: ['ledger-summary', id],
+      queryFn: () => apiFetch<LedgerSummary>(`/employees/${id}/ledger/summary`),
+      enabled: Boolean(id),
+    })),
+  });
+
+  return useMemo(() => {
+    const map = new Map<string, number>();
+    employeeIds.forEach((id, i) => {
+      const balanceCents = results[i]?.data?.balanceCents;
+      if (balanceCents !== undefined) map.set(id, balanceCents);
+    });
+    return map;
+  }, [employeeIds, results]);
 }
 
 export function useMovements(employeeId: string | undefined) {

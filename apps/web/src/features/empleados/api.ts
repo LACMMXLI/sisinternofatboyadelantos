@@ -17,6 +17,8 @@ export interface EmployeeView {
   photoObjectKey: string | null;
   hireDate: string | null;
   active: boolean;
+  /** Sueldo bruto por periodo de nómina (centavos). No calcula ISR/IMSS. */
+  baseSalaryCents: number | null;
   primaryBranchId: string;
   createdAt: string;
   primaryBranch: EmployeeBranchRef;
@@ -36,6 +38,7 @@ export interface EmployeeInput {
   displayName?: string;
   jobTitle?: string;
   hireDate?: string;
+  baseSalaryCents?: number;
   primaryBranchId: string;
   additionalBranchIds?: string[];
 }

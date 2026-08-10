@@ -58,6 +58,8 @@ const batchSelect = {
       plannedAmountCents: true,
       appliedAmountCents: true,
       balanceAfterCents: true,
+      baseSalaryCents: true,
+      netPayCents: true,
       ledgerMovementId: true,
       employee: {
         select: {
@@ -129,14 +131,22 @@ export class PayrollBatchesService {
       branchId: dto.branchId,
     });
 
-    const items: { employeeId: string; balanceCents: number }[] = [];
+    const items: {
+      employeeId: string;
+      balanceCents: number;
+      baseSalaryCents: number | null;
+    }[] = [];
     for (const employee of employees) {
       const balance = await this.getEmployeeBalance(
         user.organizationId,
         employee.id,
       );
       if (balance > 0)
-        items.push({ employeeId: employee.id, balanceCents: balance });
+        items.push({
+          employeeId: employee.id,
+          balanceCents: balance,
+          baseSalaryCents: employee.baseSalaryCents,
+        });
     }
     const totalPlannedCents = items.reduce((sum, i) => sum + i.balanceCents, 0);
 
@@ -152,6 +162,15 @@ export class PayrollBatchesService {
             employeeId: i.employeeId,
             balanceAtPrepCents: i.balanceCents,
             plannedAmountCents: i.balanceCents,
+            baseSalaryCents: i.baseSalaryCents,
+            // Neto estimado de esta semana/quincena = sueldo - lo ya
+            // adelantado/consumido. Puede salir negativo (se muestra tal
+            // cual, en rojo, en vez de recortarlo en 0): significa que el
+            // empleado ya debe más de lo que gana en el periodo.
+            netPayCents:
+              i.baseSalaryCents != null
+                ? i.baseSalaryCents - i.balanceCents
+                : null,
           })),
         },
       },
@@ -212,7 +231,15 @@ export class PayrollBatchesService {
 
     await this.prisma.payrollBatchItem.update({
       where: { id: itemId },
-      data: { plannedAmountCents: dto.plannedAmountCents },
+      data: {
+        plannedAmountCents: dto.plannedAmountCents,
+        // Reusa el sueldo ya congelado al preparar (`item.baseSalaryCents`)
+        // — solo se recalcula el neto contra el nuevo monto planeado.
+        netPayCents:
+          item.baseSalaryCents != null
+            ? item.baseSalaryCents - dto.plannedAmountCents
+            : null,
+      },
     });
     const totalPlannedCents = batch.items.reduce(
       (sum, i) =>
