@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+
+<html class="h-full dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Libreta Digital - Detalle de Empleado (Dark Mode con Guías)</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-high": "#232b40",
+                        "surface": "#0b1326",
+                        "on-secondary": "#412d00",
+                        "inverse-primary": "#900027",
+                        "on-error": "#690005",
+                        "secondary-fixed": "#ffdf9f",
+                        "surface-container": "#171f34",
+                        "surface-container-lowest": "#060e20",
+                        "tertiary": "#6ffbbe",
+                        "surface-dim": "#0b1326",
+                        "surface-tint": "#ffb3b6",
+                        "surface-variant": "#534344",
+                        "on-secondary-fixed-variant": "#5c4300",
+                        "surface-bright": "#31394d",
+                        "on-primary-fixed-variant": "#920028",
+                        "on-secondary-fixed": "#261a00",
+                        "on-tertiary-container": "#002113",
+                        "on-background": "#dfe2eb",
+                        "secondary-fixed-dim": "#f9bd22",
+                        "error-container": "#93000a",
+                        "inverse-surface": "#dfe2eb",
+                        "outline": "#a08c8c",
+                        "tertiary-fixed": "#6ffbbe",
+                        "surface-container-highest": "#2e364b",
+                        "tertiary-container": "#005236",
+                        "secondary-container": "#5c4300",
+                        "outline-variant": "#534344",
+                        "on-tertiary": "#003825",
+                        "on-primary-container": "#40000c",
+                        "primary-fixed": "#ffdada",
+                        "on-tertiary-fixed-variant": "#005236",
+                        "surface-container-low": "#131b2e",
+                        "primary": "#ffb3b6",
+                        "on-primary": "#680018",
+                        "on-surface-variant": "#d8c2c2",
+                        "on-secondary-container": "#ffdf9f",
+                        "primary-container": "#930028",
+                        "secondary": "#f9bd22",
+                        "background": "#0b1326",
+                        "on-tertiary-fixed": "#002113",
+                        "error": "#ffb4ab",
+                        "on-error-container": "#ffdad6",
+                        "on-surface": "#dfe2eb",
+                        "primary-fixed-dim": "#ffb3b6",
+                        "tertiary-fixed-dim": "#4edea3",
+                        "inverse-on-surface": "#283042",
+                        "on-primary-fixed": "#40000c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.5rem",
+                        "lg": "0.75rem",
+                        "xl": "1rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "touch-target-min": "48px",
+                        "stack-md": "16px",
+                        "stack-sm": "8px",
+                        "container-padding": "32px",
+                        "gutter": "24px",
+                        "stack-lg": "32px"
+                    },
+                    "fontFamily": {
+                        "display": ["Manrope"],
+                        "label-bold": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "headline-md": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "headline-lg": ["Manrope"],
+                        "label-md": ["Manrope"],
+                        "headline-lg-mobile": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "label-bold": ["14px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "label-md": ["14px", { "lineHeight": "1", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        /* Notebook lines for dark mode */
+        .notebook-lines {
+            background-image: repeating-linear-gradient(transparent, transparent 47px, rgba(223, 226, 235, 0.1) 48px);
+        }
+        
+        /* Guide styling */
+        .guide-arrow {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            pointer-events: none;
+            z-index: 40;
+        }
+        
+        .guide-box {
+            position: absolute;
+            background-color: var(--color-secondary-container, #5c4300);
+            color: var(--color-on-secondary-container, #ffdf9f);
+            border: 2px solid var(--color-secondary, #f9bd22);
+            border-radius: 0.5rem;
+            padding: 12px 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            max-width: 280px;
+            z-index: 40;
+            animation: pulse-border 2s infinite;
+        }
+        
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(249, 189, 34, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(249, 189, 34, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(249, 189, 34, 0); }
+        }
+        
+        .highlight-target {
+            position: relative;
+        }
+        
+        .highlight-target::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border: 2px dashed var(--color-secondary, #f9bd22);
+            border-radius: inherit;
+            pointer-events: none;
+            z-index: 30;
+            animation: dash-spin 10s linear infinite;
+        }
+        
+        @keyframes dash-spin {
+            to { stroke-dashoffset: 100; }
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface h-full flex flex-col antialiased font-body-md overflow-x-hidden">
+<!-- TopAppBar (Notebook Header Style) -->
+<header class="bg-surface-container-highest docked full-width top-0 border-b-4 border-primary-container shadow-md flex justify-between items-center w-full px-container-padding h-[72px] z-50">
+<div class="flex items-center gap-4">
+<button aria-label="Volver" class="h-touch-target-min w-touch-target-min flex items-center justify-center rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-on-surface" data-icon="arrow_back" data-weight="fill" style="font-variation-settings: 'FILL' 1;">arrow_back</span>
+</button>
+<span class="font-display text-headline-lg-mobile md:text-headline-lg text-primary">Libreta Digital</span>
+</div>
+<div class="flex items-center gap-2 md:gap-4">
+<!-- Guide Toggle Button -->
+<button class="hidden md:flex items-center gap-2 h-touch-target-min px-4 rounded-full border border-secondary text-secondary hover:bg-secondary-container/30 transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility_off" style="font-variation-settings: 'FILL' 0;">visibility_off</span>
+<span class="font-label-bold text-label-bold">Ocultar Guías</span>
+</button>
+<!-- Mobile Guide Toggle -->
+<button aria-label="Ocultar Guías" class="md:hidden h-touch-target-min w-touch-target-min flex items-center justify-center rounded-full border border-secondary text-secondary hover:bg-secondary-container/30 transition-colors">
+<span class="material-symbols-outlined" data-icon="visibility_off" style="font-variation-settings: 'FILL' 0;">visibility_off</span>
+</button>
+<button aria-label="Location" class="h-touch-target-min w-touch-target-min flex items-center justify-center rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-primary" data-icon="location_on" style="font-variation-settings: 'FILL' 0;">location_on</span>
+</button>
+<button aria-label="Account" class="h-touch-target-min w-touch-target-min flex items-center justify-center rounded-full hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-primary" data-icon="account_circle" style="font-variation-settings: 'FILL' 0;">account_circle</span>
+</button>
+</div>
+</header>
+<!-- Main Content (The "Notebook" Page) -->
+<main class="flex-1 overflow-y-auto px-4 md:px-container-padding py-stack-lg notebook-lines relative">
+<!-- Overlay for focus mode -->
+<div class="absolute inset-0 bg-surface/50 backdrop-blur-[1px] pointer-events-none z-20"></div>
+<div class="max-w-6xl mx-auto flex flex-col lg:flex-row gap-gutter relative z-30">
+<!-- Left Column: Profile Section -->
+<div class="lg:w-1/3 shrink-0">
+<section class="bg-surface-container rounded-xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] border border-surface-variant p-6 sticky top-stack-lg">
+<div class="flex flex-col items-center text-center gap-6">
+<div class="w-32 h-32 rounded-full overflow-hidden border-4 border-surface-container-highest shadow-inner">
+<img alt="Carlos - Cocina" class="w-full h-full object-cover" data-alt="A close-up portrait of a cheerful, professional male chef named Carlos in a busy restaurant kitchen. He is wearing a clean white chef's coat and a subtle smile." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvHKlia7YIswBngfG-8TLiT1Txm7rpUSLoaH1XMAwfeTcRI0220xmuojPBRrTW2IwKJZihyKjvK5Mw240gyl63DjETVfuAb_whw9lKnnQNy0j5wtgGXeCuzi6j24bWbC5kDqIPnRenbJRLI9CRtcyV34OZFvATwJLMdrmoJLki82ktj2gUgktTFSMUwsc5eXlLPH30j9c5Nmhp-KkRcFSGyy_SqmHxkgA408H1IesHMG7ykRpBgeWh"/>
+</div>
+<div>
+<h1 class="font-display text-headline-lg text-on-surface">CARLOS</h1>
+<p class="font-body-lg text-on-surface-variant flex items-center justify-center gap-2 mt-2">
+<span class="material-symbols-outlined" data-icon="restaurant" data-weight="fill" style="font-variation-settings: 'FILL' 1;">restaurant</span>
+                                Cocina
+                            </p>
+<div class="mt-4">
+<span class="inline-flex items-center px-4 py-2 bg-secondary-container text-on-secondary-container font-label-bold text-label-bold rounded-full">
+<span class="w-2 h-2 rounded-full bg-secondary mr-2"></span> Turno Mañana
+                                </span>
+</div>
+</div>
+<!-- Giant Action Button (HIGHLIGHTED) -->
+<div class="w-full relative mt-4">
+<!-- Guide Annotation for Button -->
+<div class="guide-box top-[-80px] right-[-140px] md:right-[-220px] hidden sm:block">
+<h4 class="font-label-bold mb-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-sm">lightbulb</span>
+                                    Acción Principal
+                                </h4>
+<p class="font-body-md text-sm opacity-90">Usa este botón para registrar vales, adelantos o consumos del empleado.</p>
+<!-- SVG Arrow pointing left and down -->
+<svg class="absolute bottom-[-20px] left-[20px] w-10 h-10 text-secondary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M10 14L21 3"></path>
+<path d="M10 14H21V25" transform="rotate(45 10 14)"></path>
+</svg>
+</div>
+<button class="w-full min-h-touch-target-min bg-primary-container hover:bg-primary hover:text-on-primary text-on-primary-container font-label-bold text-label-md md:text-label-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-200 flex flex-col xl:flex-row items-center justify-center gap-2 highlight-target relative z-30">
+<span class="material-symbols-outlined text-[28px]" data-icon="add_circle" data-weight="fill" style="font-variation-settings: 'FILL' 1;">add_circle</span>
+<span class="tracking-wider text-center">REGISTRAR MOVIMIENTO</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: History Section (HIGHLIGHTED) -->
+<div class="flex-1 relative z-30">
+<!-- Guide Annotation for History -->
+<div class="guide-box top-[-60px] left-0 md:left-[-120px] lg:left-[auto] lg:right-[-10px] hidden sm:block">
+<h4 class="font-label-bold mb-1 flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-sm">info</span>
+                            Historial
+                        </h4>
+<p class="font-body-md text-sm opacity-90">Aquí verás los movimientos recientes. Los verdes son sumas (adelantos), los rojos son restas (consumos).</p>
+<!-- SVG Arrow pointing down -->
+<svg class="absolute bottom-[-25px] left-1/2 -translate-x-1/2 w-8 h-8 text-secondary" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewbox="0 0 24 24">
+<path d="M12 5v14M19 12l-7 7-7-7"></path>
+</svg>
+</div>
+<section class="space-y-stack-md highlight-target p-2 rounded-xl bg-surface/80 backdrop-blur-sm">
+<h2 class="font-headline-md text-headline-md text-on-surface border-b-2 border-surface-variant pb-2 px-2">Historial Reciente</h2>
+<div class="space-y-stack-lg">
+<!-- HOY -->
+<div class="space-y-stack-sm">
+<h3 class="font-label-bold text-label-bold text-on-surface-variant tracking-wider px-2">HOY</h3>
+<div class="bg-surface-container rounded-xl shadow-md border border-surface-variant overflow-hidden">
+<!-- Entry 1 (Positive) -->
+<div class="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-variant hover:bg-surface-container-highest transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant group-hover:scale-105 transition-transform border border-surface-variant">
+<span class="material-symbols-outlined" data-icon="payments" data-weight="fill" style="font-variation-settings: 'FILL' 1;">payments</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Adelanto</p>
+<p class="font-label-md text-label-md text-on-surface-variant mt-1">3:42 PM</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-headline-md text-headline-md text-tertiary">+$500.00</p>
+</div>
+</div>
+<!-- Entry 2 (Negative) -->
+<div class="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface-container-highest transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant group-hover:scale-105 transition-transform border border-surface-variant">
+<span class="material-symbols-outlined" data-icon="local_dining" data-weight="fill" style="font-variation-settings: 'FILL' 1;">local_dining</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Consumo</p>
+<p class="font-label-md text-label-md text-on-surface-variant mt-1">1:15 PM</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-headline-md text-headline-md text-primary">-$120.00</p>
+</div>
+</div>
+</div>
+</div>
+<!-- AYER -->
+<div class="space-y-stack-sm">
+<h3 class="font-label-bold text-label-bold text-on-surface-variant tracking-wider px-2">AYER</h3>
+<div class="bg-surface-container rounded-xl shadow-md border border-surface-variant overflow-hidden">
+<!-- Entry 3 (Negative) -->
+<div class="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-surface-container-highest transition-colors group">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant group-hover:scale-105 transition-transform border border-surface-variant">
+<span class="material-symbols-outlined" data-icon="local_dining" data-weight="fill" style="font-variation-settings: 'FILL' 1;">local_dining</span>
+</div>
+<div>
+<p class="font-body-md text-body-md font-semibold text-on-surface">Consumo</p>
+<p class="font-label-md text-label-md text-on-surface-variant mt-1">8:30 PM</p>
+</div>
+</div>
+<div class="text-right">
+<p class="font-headline-md text-headline-md text-primary">-$100.00</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<!-- Mobile Floating Action Button (Only visible if normal button is out of view, kept for UX completeness but normal button is sticky in desktop) -->
+<div class="fixed bottom-6 right-6 md:hidden z-50">
+<button class="w-14 h-14 bg-primary-container text-on-primary-container rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.5)] flex items-center justify-center hover:bg-primary hover:text-on-primary transition-colors highlight-target">
+<span class="material-symbols-outlined text-[28px]" data-icon="add" data-weight="fill" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</div>
+</main>
+</body></html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - Libreta Digital</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&amp;family=Work+Sans:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-bright": "#31394d",
+                      "on-primary-fixed-variant": "#920028",
+                      "surface-variant": "#2d3449",
+                      "surface-container-lowest": "#060e20",
+                      "on-tertiary-container": "#f9fbfd",
+                      "primary-fixed-dim": "#ffb3b6",
+                      "error": "#ffb4ab",
+                      "tertiary-fixed": "#e0e3e5",
+                      "secondary-fixed-dim": "#b9c7e0",
+                      "on-primary-fixed": "#40000c",
+                      "surface-container-low": "#131b2e",
+                      "on-error-container": "#ffdad6",
+                      "on-secondary-fixed": "#0d1c2f",
+                      "on-primary-container": "#fffaf9",
+                      "surface": "#0b1326",
+                      "secondary": "#b9c7e0",
+                      "on-primary": "#68001a",
+                      "inverse-primary": "#be0037",
+                      "primary": "#ffb3b6",
+                      "on-background": "#dae2fd",
+                      "outline-variant": "#5c3f40",
+                      "surface-container-high": "#222a3d",
+                      "primary-fixed": "#ffdada",
+                      "on-tertiary-fixed": "#191c1e",
+                      "secondary-container": "#3c4a5e",
+                      "on-secondary-container": "#abb9d2",
+                      "surface-container": "#171f33",
+                      "on-surface-variant": "#e5bdbe",
+                      "on-error": "#690005",
+                      "on-secondary": "#233144",
+                      "surface-tint": "#ffb3b6",
+                      "tertiary": "#c4c7c9",
+                      "on-tertiary": "#2d3133",
+                      "tertiary-fixed-dim": "#c4c7c9",
+                      "outline": "#ac8889",
+                      "surface-dim": "#0b1326",
+                      "on-secondary-fixed-variant": "#3a485c",
+                      "on-tertiary-fixed-variant": "#444749",
+                      "tertiary-container": "#717476",
+                      "background": "#0b1326",
+                      "primary-container": "#e11d48",
+                      "inverse-on-surface": "#283044",
+                      "surface-container-highest": "#2d3449",
+                      "error-container": "#93000a",
+                      "on-surface": "#dae2fd",
+                      "secondary-fixed": "#d5e3fd",
+                      "inverse-surface": "#dae2fd"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.125rem",
+                      "lg": "0.25rem",
+                      "xl": "0.5rem",
+                      "full": "0.75rem"
+              },
+              "spacing": {
+                      "base": "8px",
+                      "sm": "12px",
+                      "xs": "4px",
+                      "md": "24px",
+                      "gutter": "24px",
+                      "margin-desktop": "64px",
+                      "margin-mobile": "16px",
+                      "lg": "48px",
+                      "xl": "80px"
+              },
+              "fontFamily": {
+                      "display-lg": ["Manrope", "sans-serif"],
+                      "body-md": ["Work Sans", "sans-serif"],
+                      "body-lg": ["Work Sans", "sans-serif"],
+                      "label-sm": ["JetBrains Mono", "monospace"],
+                      "headline-lg-mobile": ["Manrope", "sans-serif"],
+                      "headline-md": ["Manrope", "sans-serif"],
+                      "label-md": ["JetBrains Mono", "monospace"],
+                      "headline-lg": ["Manrope", "sans-serif"]
+              },
+              "fontSize": {
+                      "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                      "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                      "label-sm": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                      "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}]
+              }
+            }
+          }
+        }
+    </script>
+<style>
+        .glow-input:focus {
+            box-shadow: 0 0 0 2px theme('colors.primary-container'), 0 0 15px theme('colors.primary-container' / 15%);
+        }
+        .btn-inner-glow {
+            box-shadow: inset 0 2px 0 0 rgba(255, 255, 255, 0.1);
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-5px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface min-h-screen flex items-center justify-center p-margin-mobile md:p-margin-desktop relative overflow-hidden">
+<!-- Background Texture -->
+<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(circle at center, theme('colors.surface-container-high') 1px, transparent 1px); background-size: 24px 24px;"></div>
+<main class="w-full max-w-[480px] relative z-10">
+<!-- Login Container -->
+<div class="bg-surface-container-low border border-surface-container-highest rounded-xl p-xl shadow-lg relative flex flex-col items-center">
+<!-- Logo Area -->
+<div class="mb-lg flex flex-col items-center">
+<div class="w-20 h-20 bg-surface-container-high rounded-full flex items-center justify-center mb-md shadow-sm border border-surface-container-highest">
+<span class="material-symbols-outlined text-primary-container text-[40px]" style="font-variation-settings: 'FILL' 1;">book_4</span>
+</div>
+<h1 class="font-display-lg text-display-lg text-primary text-center">Libreta Digital</h1>
+</div>
+<!-- Interactive Guide (Tooltip) -->
+<div class="absolute right-[-40px] top-[180px] md:right-[-120px] bg-yellow-400 text-black px-md py-sm rounded-lg shadow-xl animate-float hidden md:flex flex-col items-start max-w-[200px] z-20">
+<p class="font-label-sm text-label-sm font-bold leading-tight">Ingresa tu código de acceso personal</p>
+<!-- Tooltip Arrow -->
+<div class="absolute left-[-8px] top-1/2 transform -translate-y-1/2 w-0 h-0 border-y-[8px] border-y-transparent border-r-[8px] border-r-yellow-400"></div>
+</div>
+<!-- Form -->
+<form action="#" class="w-full flex flex-col gap-lg" method="POST">
+<div class="flex flex-col gap-xs relative">
+<!-- Mobile Tooltip Indicator -->
+<div class="absolute right-0 -top-10 bg-yellow-400 text-black px-sm py-xs rounded text-xs font-bold md:hidden shadow-lg animate-float">
+                        Ingresa tu código
+                        <div class="absolute bottom-[-6px] right-4 w-0 h-0 border-x-[6px] border-x-transparent border-t-[6px] border-t-yellow-400"></div>
+</div>
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase" for="pin">Código de Acceso / PIN</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-md top-1/2 transform -translate-y-1/2 text-on-surface-variant">lock</span>
+<input class="w-full bg-surface-container-highest border border-surface-container-highest rounded-lg py-md pl-[60px] pr-md text-center font-display-lg text-display-lg tracking-[0.2em] text-on-surface placeholder:text-surface-container focus:outline-none focus:border-primary-container glow-input transition-all duration-200" id="pin" inputmode="numeric" name="pin" pattern="[0-9]*" placeholder="••••" required="" type="password"/>
+</div>
+</div>
+<button class="w-full bg-primary-container text-on-primary-container font-headline-md text-headline-md py-md rounded-lg btn-inner-glow hover:bg-inverse-primary hover:scale-[1.02] transition-all duration-200 shadow-lg flex justify-center items-center gap-sm" type="submit">
+<span>ENTRAR</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">arrow_forward</span>
+</button>
+</form>
+<div class="mt-lg">
+<a class="font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors flex items-center gap-xs" href="#">
+<span class="material-symbols-outlined text-[16px]">help</span>
+                    ¿Olvidaste tu código?
+                </a>
+</div>
+</div>
+</main>
+<script>
+        // Simple micro-interaction for input formatting
+        const pinInput = document.getElementById('pin');
+        pinInput.addEventListener('input', function(e) {
+            // Only allow numbers
+            this.value = this.value.replace(/[^0-9]/g, '');
+            // Limit to max 6 chars if desired, though prompt didn't specify length, large field implies 4-6
+            if(this.value.length > 6) {
+                this.value = this.value.slice(0,6);
+            }
+        });
+    </script>
+</body></html>
