@@ -23,6 +23,7 @@ apps/api/generated/
 *.log
 npm-debug.log*
 pnpm-debug.log*
+.codex-runtime/
 
 # Editor / OS
 .vscode/*

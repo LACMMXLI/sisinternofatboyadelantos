@@ -5,17 +5,17 @@
  * o la utilidad de Tailwind generada a partir de @theme en index.css.
  */
 :root {
-  --canvas: #f3f7fd;
-  --surface: #ffffff;
-  --surface-soft: #f8faff;
-  --ink: #10203f;
-  --muted: #66738c;
-  --line: #dce5f3;
+  --canvas: #f7f3ed;
+  --surface: #fffdfa;
+  --surface-soft: #faf6f0;
+  --ink: #252326;
+  --muted: #746f6b;
+  --line: #e5dcd1;
 
-  --brand-800: #07348f;
-  --brand-700: #0a46b6;
-  --brand-600: #0f67e8;
-  --brand-500: #1787ff;
+  --brand-800: #8f0027;
+  --brand-700: #bd0033;
+  --brand-600: #dc003b;
+  --brand-500: #ef164f;
 
   --success: #0dbd5b;
   --success-soft: #ddf8e8;
@@ -34,8 +34,8 @@
   --radius-pill: 999px;
 
   /* Sombras */
-  --shadow-control: 0 1px 2px rgba(16, 32, 63, 0.06), 0 1px 1px rgba(16, 32, 63, 0.04);
-  --shadow-panel: 0 12px 32px rgba(16, 32, 63, 0.1), 0 2px 8px rgba(16, 32, 63, 0.06);
+  --shadow-control: 0 1px 2px rgba(46, 35, 26, 0.06), 0 1px 1px rgba(46, 35, 26, 0.04);
+  --shadow-panel: 0 12px 32px rgba(46, 35, 26, 0.1), 0 2px 8px rgba(46, 35, 26, 0.06);
 }
 
 /**

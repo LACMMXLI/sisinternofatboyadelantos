@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import './styles/tokens.css';
+@import './styles/daily-ledger.css';
 
 /* Manrope: tipografía principal de la interfaz (§4.4). Empaquetada localmente vía Fontsource. */
 @import '@fontsource/manrope/400.css';

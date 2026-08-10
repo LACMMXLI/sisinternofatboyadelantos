@@ -64,6 +64,20 @@ export function useLedgerSummary(employeeId: string | undefined) {
  * el resto de la familia `ledger-summary` al registrar un movimiento.
  */
 export function useEmployeeBalances(employeeIds: string[]) {
+  const summaries = useEmployeeLedgerSummaries(employeeIds);
+
+  return useMemo(() => {
+    const map = new Map<string, number>();
+    summaries.forEach((summary, id) => map.set(id, summary.balanceCents));
+    return map;
+  }, [summaries]);
+}
+
+/**
+ * Resumen completo por empleado para superficies operativas que necesitan
+ * mostrar saldo y monto pendiente al mismo tiempo, sin duplicar consultas.
+ */
+export function useEmployeeLedgerSummaries(employeeIds: string[]) {
   const results = useQueries({
     queries: employeeIds.map((id) => ({
       queryKey: ['ledger-summary', id],
@@ -73,10 +87,10 @@ export function useEmployeeBalances(employeeIds: string[]) {
   });
 
   return useMemo(() => {
-    const map = new Map<string, number>();
+    const map = new Map<string, LedgerSummary>();
     employeeIds.forEach((id, i) => {
-      const balanceCents = results[i]?.data?.balanceCents;
-      if (balanceCents !== undefined) map.set(id, balanceCents);
+      const summary = results[i]?.data;
+      if (summary) map.set(id, summary);
     });
     return map;
   }, [employeeIds, results]);

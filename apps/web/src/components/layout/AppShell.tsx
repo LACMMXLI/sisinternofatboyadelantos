@@ -9,12 +9,14 @@ import { BottomNav } from './BottomNav';
  */
 export function AppShell() {
   return (
-    <div className="flex min-h-dvh flex-col bg-canvas">
+    <div className="app-shell">
       <AppHeader />
-      <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-3.5 md:px-6 md:py-4">
-        <Outlet />
-      </main>
-      <BottomNav />
+      <div className="app-shell__body">
+        <BottomNav />
+        <main className="app-shell__main">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }
