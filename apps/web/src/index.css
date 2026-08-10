@@ -15,6 +15,7 @@
 @theme {
   --font-sans: 'Manrope', 'Inter', system-ui, sans-serif;
   --font-hand: 'Patrick Hand', cursive;
+  --font-jakarta: 'Plus Jakarta Sans', system-ui, sans-serif;
 
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
@@ -45,6 +46,22 @@
 
   --shadow-control: var(--shadow-control);
   --shadow-panel: var(--shadow-panel);
+
+  /* Stitch Design System - Typography scales */
+  --font-display: 'Plus Jakarta Sans';
+  --font-headline-lg: 'Plus Jakarta Sans';
+  --font-headline-md: 'Plus Jakarta Sans';
+  --font-body-md: 'Plus Jakarta Sans';
+  --font-label-bold: 'Plus Jakarta Sans';
+
+  /* Stitch spacing scale (8px base) */
+  --spacing-unit: 8px;
+  --spacing-stack-sm: 8px;
+  --spacing-stack-md: 16px;
+  --spacing-stack-lg: 32px;
+  --spacing-gutter: 24px;
+  --spacing-container-padding: 32px;
+  --spacing-touch-target-min: 48px;
 }
 
 @layer base {

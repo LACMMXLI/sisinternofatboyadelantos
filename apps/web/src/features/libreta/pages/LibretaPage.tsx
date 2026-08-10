@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { EmployeeList, type EmployeeListEntry } from '@/components/employees/EmployeeList';
+import { EmployeeCard } from '@/components/employees/EmployeeCard';
 import { EmployeeWorkspacePanel } from '@/components/employees/EmployeeWorkspacePanel';
 import { NotebookSpine } from '@/components/notebook/NotebookSpine';
 import { MobileCaptureSheet } from '@/components/movement/MobileCaptureSheet';
@@ -8,16 +8,28 @@ import { useEmployees } from '@/features/empleados/api';
 import { useMovementCategories, useBranches } from '@/features/configuracion/api';
 import { useEmployeeBalances } from '@/features/libreta/api';
 
+export interface EmployeeCardEntry {
+  id: string;
+  displayName: string;
+  jobTitle: string;
+  balanceCents: number;
+  active: boolean;
+  photoObjectKey?: string | null;
+}
+
 /**
- * Pantalla insignia — "Libreta" (corrección 2026-08-09 #2, decisión del
- * usuario). Vuelve al modelo mental de dos hojas: la izquierda, angosta,
- * lista TODOS los empleados; la derecha, grande, abre en el empleado
- * elegido con su saldo, desglose e historial completo. Entre ambas,
- * `NotebookSpine` dibuja el "resorte" de argollas que simula el doblez
- * físico de una libreta abierta. Reemplaza el intento de "libreta del día"
- * (ver commit c6a3de8): ese modelo centraba la pantalla en el día, no en
- * el empleado, y dificultaba responder "¿cuánto lleva Fulano?" de un
- * vistazo — que es la pregunta que esta pantalla existe para responder.
+ * LibretaPage — Pantalla principal de Libreta Digital (Sistema Stitch).
+ *
+ * Diseño:
+ * - Search bar gigante (72px) en modo desktop
+ * - Grid de empleados (1 col mobile, 2 col tablet, 3 col desktop)
+ * - Cada tarjeta: EmployeeCard con imagen circular 160px, nombre grande, badge de puesto
+ * - En desktop grande (xl): vista dual con workspace a la derecha
+ *
+ * Modo responsive:
+ * - Mobile (sm): 1 columna + bottom nav
+ * - Tablet (md-lg): 2 columnas
+ * - Desktop (xl+): 3 columnas + workspace
  */
 export function LibretaPage() {
   const [branchId, setBranchId] = useState<string | undefined>(undefined);
@@ -25,6 +37,7 @@ export function LibretaPage() {
   const [search, setSearch] = useState('');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
   const [captureOpen, setCaptureOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'dual'>('grid'); // Toggle entre grid y dual
 
   useEffect(() => {
     const timer = setTimeout(() => setSearch(searchInput.trim()), 250);
@@ -43,7 +56,7 @@ export function LibretaPage() {
   const employeeIds = useMemo(() => (employees ?? []).map((e) => e.id), [employees]);
   const balances = useEmployeeBalances(employeeIds);
 
-  const listEntries: EmployeeListEntry[] = useMemo(
+  const cardEntries: EmployeeCardEntry[] = useMemo(
     () =>
       (employees ?? []).map((e) => ({
         id: e.id,
@@ -51,6 +64,7 @@ export function LibretaPage() {
         jobTitle: e.jobTitle || 'Sin puesto',
         balanceCents: balances.get(e.id) ?? 0,
         active: e.active,
+        photoObjectKey: e.photoObjectKey,
       })),
     [employees, balances],
   );
@@ -71,29 +85,40 @@ export function LibretaPage() {
     return employee?.primaryBranchId ?? activeBranchId;
   };
 
-  // Abre la libreta con alguien ya elegido: evita una hoja derecha vacía
-  // en la primera carga y tras filtrar/buscar si la selección quedó fuera
-  // de la lista visible.
+  // Abre la pantalla con alguien ya elegido
   useEffect(() => {
-    if (listEntries.length === 0) return;
-    const stillVisible = listEntries.some((e) => e.id === selectedEmployeeId);
+    if (cardEntries.length === 0) return;
+    const stillVisible = cardEntries.some((e) => e.id === selectedEmployeeId);
     if (!selectedEmployeeId || !stillVisible) {
-      setSelectedEmployeeId(listEntries[0].id);
+      setSelectedEmployeeId(cardEntries[0].id);
     }
-  }, [listEntries, selectedEmployeeId]);
+  }, [cardEntries, selectedEmployeeId]);
 
   return (
-    <div className="space-y-3.5 pb-6">
-      <div className="flex flex-wrap items-center justify-between gap-2.5">
-        <div>
-          <h1 className="text-lg font-bold text-ink">Libreta</h1>
-          <p className="text-sm text-muted">Elige un empleado para ver su saldo e historial.</p>
+    <div className="pb-6 pt-4">
+      {/* Giant Search Bar - Desktop only */}
+      <div className="w-full max-w-3xl mx-auto mt-8 mb-12 relative hidden md:block">
+        <div className="relative group">
+          <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+            <Search size={32} className="text-muted group-focus-within:text-brand-600 transition-colors" />
+          </div>
+          <input
+            type="search"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Buscar empleado…"
+            className="block w-full h-[72px] pl-20 pr-6 rounded-[16px] border-2 border-muted bg-surface-soft text-headline-md text-ink placeholder:text-muted shadow-control focus:border-brand-600 focus:ring-0 focus:shadow-panel transition-all duration-300 outline-none font-semibold"
+          />
         </div>
-        {branches && branches.length > 1 ? (
+      </div>
+
+      {/* Branch selector - Mobile */}
+      {branches && branches.length > 1 ? (
+        <div className="px-4 mb-4 md:hidden">
           <select
             value={activeBranchId ?? ''}
             onChange={(e) => setBranchId(e.target.value || undefined)}
-            className="h-10 rounded-control border border-line bg-surface px-3 text-sm outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/30"
+            className="h-10 rounded-control border border-muted bg-surface-soft px-3 text-sm outline-none focus-visible:border-brand-600 focus-visible:ring-2 focus-visible:ring-brand-600/30 w-full text-ink"
           >
             {branches.map((b) => (
               <option key={b.id} value={b.id}>
@@ -101,38 +126,102 @@ export function LibretaPage() {
               </option>
             ))}
           </select>
-        ) : null}
+        </div>
+      ) : null}
+
+      {/* Modo: Grid o Dual (toggle for larger screens) */}
+      <div className="hidden lg:flex justify-end px-6 mb-4 gap-2">
+        <button
+          onClick={() => setViewMode('grid')}
+          className={`px-4 py-2 rounded-control font-semibold transition-all ${
+            viewMode === 'grid'
+              ? 'bg-brand-600 text-white'
+              : 'bg-surface-soft text-ink hover:bg-muted'
+          }`}
+        >
+          Grid View
+        </button>
+        <button
+          onClick={() => setViewMode('dual')}
+          className={`px-4 py-2 rounded-control font-semibold transition-all ${
+            viewMode === 'dual'
+              ? 'bg-brand-600 text-white'
+              : 'bg-surface-soft text-ink hover:bg-muted'
+          }`}
+        >
+          Detail View
+        </button>
       </div>
 
-      <div className="flex flex-col gap-2.5 xl:flex-row xl:items-stretch xl:gap-0">
-        {/* Hoja izquierda: angosta, todos los empleados (§ referencia visual 1) */}
-        <div className="flex w-full flex-col gap-2.5 xl:w-[300px] xl:shrink-0">
-          <label className="relative">
-            <Search size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted" />
-            <input
-              type="search"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Buscar empleado…"
-              className="h-10 w-full rounded-control border border-line bg-surface pl-9 pr-3 text-sm outline-none focus-visible:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/30"
-            />
-          </label>
-          <EmployeeList
-            employees={listEntries}
-            selectedId={selectedEmployeeId}
-            onSelect={setSelectedEmployeeId}
-            onNewMovement={() => setCaptureOpen(true)}
-          />
-        </div>
+      {/* Dual View: Left employee list + Right workspace (desktop xl+) */}
+      {viewMode === 'dual' && (
+        <div className="hidden xl:flex flex-col gap-2.5 lg:flex-row lg:items-stretch lg:gap-0">
+          {/* Left: Employee grid (smaller) */}
+          <div className="flex w-full flex-col gap-2.5 lg:w-[300px] lg:shrink-0">
+            <label className="relative">
+              <Search size={15} className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-muted" />
+              <input
+                type="search"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Buscar empleado…"
+                className="h-10 w-full rounded-control border border-muted bg-surface-soft pl-9 pr-3 text-sm outline-none focus-visible:border-brand-600 focus-visible:ring-2 focus-visible:ring-brand-600/30 text-ink"
+              />
+            </label>
+            <div className="flex-1 space-y-1 overflow-y-auto pr-0.5">
+              {cardEntries.map((emp) => (
+                <button
+                  key={emp.id}
+                  onClick={() => setSelectedEmployeeId(emp.id)}
+                  className={`flex w-full items-center gap-2.5 rounded-2xl border p-2 text-left transition-colors ${
+                    emp.id === selectedEmployeeId
+                      ? 'border-brand-600 bg-brand-600/10'
+                      : 'border-transparent hover:bg-surface-soft text-ink'
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-full bg-surface border border-muted flex items-center justify-center shrink-0 text-sm font-bold text-ink">
+                    {emp.displayName.charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-ink">{emp.displayName}</p>
+                    <p className="truncate text-xs text-muted">{emp.jobTitle}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
 
-        {/* Resorte central: solo visible cuando ambas hojas conviven lado a lado */}
-        <NotebookSpine />
+          {/* Spine */}
+          <NotebookSpine />
 
-        {/* Hoja derecha: grande, detalle del empleado elegido */}
-        <div className="w-full xl:flex-1">
-          <EmployeeWorkspacePanel employeeId={selectedEmployeeId} onNewMovement={() => setCaptureOpen(true)} />
+          {/* Right: Detail workspace */}
+          <div className="w-full xl:flex-1">
+            <EmployeeWorkspacePanel employeeId={selectedEmployeeId} onNewMovement={() => setCaptureOpen(true)} />
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Grid View: Large employee cards (default for mobile/tablet, optional for desktop) */}
+      {viewMode === 'grid' && (
+        <div className="px-4 md:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {cardEntries.map((emp) => (
+              <EmployeeCard
+                key={emp.id}
+                displayName={emp.displayName}
+                jobTitle={emp.jobTitle}
+                balanceCents={emp.balanceCents}
+                selected={emp.id === selectedEmployeeId}
+                photoUrl={emp.photoObjectKey ?? undefined}
+                onClick={() => {
+                  setSelectedEmployeeId(emp.id);
+                  setCaptureOpen(true); // Auto-open capture on employee select
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {captureOpen ? (
         <MobileCaptureSheet
